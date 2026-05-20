@@ -14,10 +14,12 @@ function showToast(message, type = 'success') {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Luật Schedule Landing Page loaded');
     
-    const accessBtn = document.getElementById('access-app');
-    if (accessBtn) {
-        accessBtn.addEventListener('click', () => {
+    // Handle all access app buttons
+    const accessBtns = document.querySelectorAll('#access-app, .access-app-btn');
+    accessBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
             window.location.href = 'https://luat-schedule-production.up.railway.app/';
         });
-    }
+    });
 });
