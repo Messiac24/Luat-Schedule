@@ -1,0 +1,193 @@
+{
+  "subjects": [
+    {
+      "id": "20LS0002",
+      "ma_hp": "20LS0002",
+      "ten_hoc_phan": "Lịch sử Nhà nước và Pháp luật Việt Nam",
+      "tc": 2,
+      "giang_vien": "Nguyễn Văn Bắc",
+      "phong_hoc": "A32.T2.A01",
+      "thoi_gian": "18/04/2026 (Thứ Bảy) - Chiều (Trực tiếp)\n19/04/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "18/04/2026 (Thứ Bảy) - Chiều (Trực tiếp)\n19/04/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LH26B2DL",
+        "LHK50DL",
+        "LLT50DLTC"
+      ],
+      "trang_thai": "Đã học",
+      "last_scraped": "2026-05-20T21:17:53.602714",
+      "stt": 1
+    },
+    {
+      "id": "20LH2212",
+      "ma_hp": "20LH2212",
+      "ten_hoc_phan": "Phương pháp nghiên cứu Luật học",
+      "tc": 3,
+      "giang_vien": "Nguyễn Thị Loan",
+      "phong_hoc": "A32.T3.A01\nA32.T3.B02",
+      "thoi_gian": "09/05/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n10/05/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "09/05/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n10/05/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LH26B2DL",
+        "LHK50DL",
+        "LLT50DLTC"
+      ],
+      "trang_thai": "Đã học",
+      "last_scraped": "2026-05-20T21:17:53.602714",
+      "stt": 2
+    },
+    {
+      "id": "20LH1104",
+      "ma_hp": "20LH1104",
+      "ten_hoc_phan": "Lý luận về pháp luật",
+      "tc": 3,
+      "giang_vien": "Nguyễn Thị Oanh",
+      "phong_hoc": "A31.303",
+      "thoi_gian": "16/05/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n17/05/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "16/05/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n17/05/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LH26B2DL",
+        "LHK50DL",
+        "LLT50DLCÐ",
+        "LLT50DLTC",
+        "LLT50DLCĐ"
+      ],
+      "trang_thai": "Học bù",
+      "last_scraped": "2026-05-20T21:17:53.602714",
+      "stt": 3
+    },
+    {
+      "id": "20LH1203",
+      "ma_hp": "20LH1203",
+      "ten_hoc_phan": "Luật Hiến pháp 2",
+      "tc": 3,
+      "giang_vien": "Nguyễn Thị Vân Anh",
+      "phong_hoc": "A32.T2.A01",
+      "thoi_gian": "30/05/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n31/05/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "30/05/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n31/05/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LH26B2DL",
+        "LHK50DL",
+        "LLT50DLCÐ",
+        "LLT50DLTC",
+        "LLT50DLCĐ"
+      ],
+      "trang_thai": "Chưa học",
+      "last_scraped": "2026-05-20T21:17:53.602714",
+      "stt": 4
+    },
+    {
+      "id": "20LH1204",
+      "ma_hp": "20LH1204",
+      "ten_hoc_phan": "Luật Hành chính",
+      "tc": 3,
+      "giang_vien": "Trần Thị Ngọc Kim",
+      "phong_hoc": "A7.5",
+      "thoi_gian": "06/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n07/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "06/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n07/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LH26B2DL",
+        "LHK50DL",
+        "LLT50DLCÐ",
+        "LLT50DLTC",
+        "LLT50DLCĐ"
+      ],
+      "trang_thai": "Chưa học",
+      "last_scraped": "2026-05-20T21:17:53.602714",
+      "stt": 5
+    },
+    {
+      "id": "LC1101X",
+      "ma_hp": "LC1101X",
+      "ten_hoc_phan": "Triết học Mác - Lênin",
+      "tc": 3,
+      "giang_vien": "Phạm Hữu Doanh",
+      "phong_hoc": "A7.2",
+      "thoi_gian": "13/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n14/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "13/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n14/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LHK50DL"
+      ],
+      "trang_thai": "Chưa học",
+      "last_scraped": "2026-05-20T21:17:53.602714",
+      "stt": 6
+    },
+    {
+      "id": "20LH1105D",
+      "ma_hp": "20LH1105D",
+      "ten_hoc_phan": "Luật Hiến pháp 1",
+      "tc": 3,
+      "giang_vien": "Lê Minh Bảo Trung",
+      "phong_hoc": "A7.8",
+      "thoi_gian": "27/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n28/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "27/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n28/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LH26B2DL",
+        "LHK50DL",
+        "LLT50DLCÐ",
+        "LLT50DLTC",
+        "LLT50DLCĐ"
+      ],
+      "trang_thai": "Chưa học",
+      "last_scraped": "2026-05-20T21:17:53.602714",
+      "stt": 7
+    },
+    {
+      "id": "20LH1103",
+      "ma_hp": "20LH1103",
+      "ten_hoc_phan": "Lý luận về nhà nước",
+      "tc": 2,
+      "giang_vien": "Nguyễn Thị Loan",
+      "phong_hoc": "A7.5",
+      "thoi_gian": "04/07/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n05/07/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "04/07/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n05/07/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LH26B2DL",
+        "LHK50DL",
+        "LLT50DLCÐ",
+        "LLT50DLTC",
+        "LLT50DLCĐ"
+      ],
+      "trang_thai": "Chưa học",
+      "last_scraped": "2026-05-20T21:17:53.602714",
+      "stt": 8
+    },
+    {
+      "id": "21LH1105CÐ",
+      "ma_hp": "21LH1105CÐ",
+      "ten_hoc_phan": "Nhập môn Luật học",
+      "tc": 2,
+      "giang_vien": "Nguyễn Đắc Văn",
+      "phong_hoc": "A7.3",
+      "thoi_gian": "13/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n14/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "13/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n14/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LLT50DLCÐ",
+        "LLT50DLTC",
+        "LLT50DLCĐ"
+      ],
+      "trang_thai": "Chưa học",
+      "last_scraped": "2026-05-20T21:17:53.603728",
+      "stt": 9
+    },
+    {
+      "id": "LH1104CÐ",
+      "ma_hp": "LH1104CÐ",
+      "ten_hoc_phan": "Lịch sử văn minh thế giới",
+      "tc": 2,
+      "giang_vien": "Bùi Văn Hùng",
+      "phong_hoc": "A7.8",
+      "thoi_gian": "20/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n21/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "thoi_gian_goc": "20/06/2026 (Thứ Bảy)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)\n21/06/2026 (Chủ Nhật)\n  - Sáng (Trực tiếp)\n  - Chiều (Trực tiếp)",
+      "lop_hoc": [
+        "LLT50DLCÐ",
+        "LLT50DLTC",
+        "LLT50DLCĐ"
+      ],
+      "trang_thai": "Chưa học",
+      "last_scraped": "2026-05-20T21:17:53.603728",
+      "stt": 10
+    }
+  ],
+  "last_updated": "2026-05-20T21:17:53.609025"
+}

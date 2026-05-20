@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if is_admin %}Luật Schedule Admin{% else %}Luật Schedule{% endif %}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="app-header">
+        <div class="container header-content">
+            <h1>Luật Schedule {% if is_admin %}<span>Admin</span>{% endif %}</h1>
+            <div class="actions">
+                {% if is_admin %}
+                <button id="btn-scrape" class="btn btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+                    Scrape Mới
+                </button>
+                <button id="btn-sync" class="btn btn-primary is-hidden">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Sync Lên Google Sheets
+                </button>
+                <form method="post" action="{{ url_for('logout') }}">
+                    <button class="btn btn-secondary" type="submit">Đăng xuất</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="table-card">
+            <div class="table-header">
+                <h2>Lịch Học Đồng Bộ</h2>
+                <p>Cập nhật lần cuối: {% if data.last_updated %}{{ (data.last_updated|string)[:10].split('-')|reverse|join('/') }}{% else %}Chưa có dữ liệu{% endif %}</p>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>MÃ HP</th>
+                            <th>TÊN HỌC PHẦN</th>
+                            <th>TC</th>
+                            <th>GIẢNG VIÊN</th>
+                            <th>PHÒNG</th>
+                            <th>THỜI GIAN</th>
+                            <th>LỚP HỌC</th>
+                            <th>TRẠNG THÁI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subj in data.subjects %}
+                        <tr class="subject-row status-{{ subj.trang_thai|lower|replace(' ', '-') }}{% if subj.is_low_class_count %} low-class-count{% endif %}" data-id="{{ subj.id }}" data-low-class-count="{{ 'true' if subj.is_low_class_count else 'false' }}">
+                            <td class="col-stt" data-label="STT">{{ subj.stt }}</td>
+                            <td class="col-id" data-label="MÃ HP">{{ subj.ma_hp }}</td>
+                            <td class="col-name" data-label="TÊN HỌC PHẦN">{{ subj.ten_hoc_phan }}</td>
+                            <td class="col-tc" data-label="TC">{{ subj.tc }}</td>
+                            <td class="col-teacher" data-label="GIẢNG VIÊN">{{ subj.giang_vien }}</td>
+                            <td class="col-room" data-label="PHÒNG">
+                                {% if is_admin %}
+                                <textarea class="admin-textarea room-editor" rows="3">{{ subj.phong_hoc }}</textarea>
+                                {% else %}
+                                <div class="room-input editable-field">{{ subj.phong_hoc }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="col-time" data-label="THỜI GIAN">
+                                {% if is_admin %}
+                                <textarea class="admin-textarea time-editor" rows="6">{{ subj.thoi_gian }}</textarea>
+                                {% else %}
+                                <div class="time-input editable-field schedule-list" data-raw-time="{{ subj.thoi_gian|e }}">
+                                    {% for entry in subj.schedule_entries %}
+                                    <div class="schedule-entry">
+                                        {% if entry.date %}
+                                        <div class="schedule-date">{{ entry.date }}</div>
+                                        {% endif %}
+                                        {% if entry.periods %}
+                                        <div class="schedule-periods">
+                                            {% for period in entry.periods %}
+                                            <span class="schedule-period">{{ period }}</span>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <span class="schedule-empty">Chưa có lịch</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="col-classes" data-label="LỚP HỌC">
+                                {% for lop in subj.lop_hoc %}
+                                    <span class="badge-class">{{ lop }}</span>
+                                {% endfor %}
+                            </td>
+                            <td class="col-status" data-label="TRẠNG THÁI">
+                                {% if is_admin %}
+                                <select class="status-select" onchange="updateStatus('{{ subj.id }}', this.value)">
+                                    <option value="Chưa học" {% if subj.trang_thai == 'Chưa học' %}selected{% endif %}>Chưa học</option>
+                                    <option value="Đã học" {% if subj.trang_thai == 'Đã học' %}selected{% endif %}>Đã học</option>
+                                    <option value="Học bù" {% if subj.trang_thai == 'Học bù' %}selected{% endif %}>Học bù</option>
+                                </select>
+                                <button class="btn btn-save-row" type="button" data-id="{{ subj.id }}">Lưu</button>
+                                {% else %}
+                                <span class="status-badge">{{ subj.trang_thai }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="empty-state">
+                                <p>Chưa có dữ liệu. Hãy chạy Scrape để lấy dữ liệu từ DLU Online.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
