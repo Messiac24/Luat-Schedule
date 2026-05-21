@@ -65,6 +65,10 @@ def sheets_enabled():
     )
 
 
+def is_vercel_runtime():
+    return bool(os.getenv("VERCEL"))
+
+
 def get_sheet():
     if GOOGLE_SERVICE_ACCOUNT_JSON:
         credentials_info = json.loads(GOOGLE_SERVICE_ACCOUNT_JSON)
@@ -368,6 +372,7 @@ def index():
         can_edit=False,
         view_mode="view",
         sheets_enabled=sheets_enabled(),
+        is_vercel=is_vercel_runtime(),
     )
 
 
@@ -398,6 +403,7 @@ def admin():
         can_edit=can_edit,
         view_mode=view_mode,
         sheets_enabled=sheets_enabled(),
+        is_vercel=is_vercel_runtime(),
     )
 
 
@@ -516,7 +522,7 @@ def reset_subject():
 @app.route("/api/scrape", methods=["POST"])
 @admin_required_json
 def run_scrape():
-    if os.getenv("VERCEL"):
+    if is_vercel_runtime():
         return jsonify(
             {
                 "success": False,

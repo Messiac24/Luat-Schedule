@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import app
 
@@ -56,7 +57,19 @@ class AdminViewModeTests(unittest.TestCase):
         self.assertIn("time-editor", html)
         self.assertIn("room-editor", html)
         self.assertIn("btn-save-row", html)
+        self.assertIn("btn-scrape", html)
         self.assertIn("Xem như người dùng", html)
+
+    def test_admin_edit_mode_hides_scrape_button_on_vercel(self):
+        self.login()
+
+        with patch.object(app, "is_vercel_runtime", return_value=True):
+            response = self.client.get("/admin")
+        html = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("btn-scrape", html)
+        self.assertIn("status-select", html)
 
     def test_admin_view_mode_renders_like_public_but_keeps_admin_session_actions(self):
         self.login()
@@ -81,6 +94,16 @@ class AdminViewModeTests(unittest.TestCase):
         self.assertNotIn("status-select", html)
         self.assertNotIn("btn-save-row", html)
         self.assertNotIn("Xem như người dùng", html)
+
+    def test_empty_state_points_to_github_actions_scrape(self):
+        app.prepare_data_for_view = lambda: {"subjects": [], "last_updated": ""}
+
+        response = self.client.get("/")
+        html = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Scrape DLU schedule", html)
+        self.assertIn("GitHub Actions", html)
 
 
 if __name__ == "__main__":
