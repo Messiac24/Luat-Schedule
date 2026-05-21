@@ -151,8 +151,14 @@ h1 span {
 /* Main Content */
 main {
     padding-top: 40px;
-    padding-bottom: 80px;
+    padding-bottom: 128px;
     animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+main::after {
+    content: "";
+    display: block;
+    height: 128px;
 }
 
 @keyframes fadeUp {
@@ -831,6 +837,11 @@ tr.subject-row.low-class-count .badge-class {
 
     main {
         padding-top: 24px;
+        padding-bottom: 120px;
+    }
+
+    main::after {
+        height: 120px;
     }
 
     .header-content,
@@ -1083,7 +1094,11 @@ tr.subject-row.low-class-count .badge-class {
 
     main {
         padding-top: 14px;
-        padding-bottom: 72px;
+        padding-bottom: max(112px, calc(88px + env(safe-area-inset-bottom)));
+    }
+
+    main::after {
+        height: max(112px, calc(88px + env(safe-area-inset-bottom)));
     }
 
     .table-card {
