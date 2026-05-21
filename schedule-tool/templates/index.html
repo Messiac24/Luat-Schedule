@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if is_admin %}Luật Schedule Admin{% else %}Luật Schedule{% endif %}</title>
+    <meta name="theme-color" content="#4F46E5">
+    <link rel="manifest" href="{{ url_for('manifest') }}">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,15 +17,30 @@
         <div class="container header-content">
             <h1>Luật Schedule {% if is_admin %}<span>Admin</span>{% endif %}</h1>
             <div class="actions">
+                <button id="btn-toggle-class-map" class="btn btn-secondary">
+                    Chuyển mã lớp
+                </button>
+                <button id="btn-export-excel" class="btn btn-primary" type="button">
+                    Export Excel
+                </button>
                 {% if is_admin %}
+                {% if can_edit %}
+                <a class="btn btn-secondary" href="{{ url_for('admin', mode='view') }}">Xem như người dùng</a>
+                {% else %}
+                <a class="btn btn-primary" href="{{ url_for('admin', mode='edit') }}">Quay lại quản trị</a>
+                {% endif %}
+                {% if can_edit %}
                 <button id="btn-scrape" class="btn btn-secondary">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
                     Scrape Mới
                 </button>
-                <button id="btn-sync" class="btn btn-primary is-hidden">
+                {% if sheets_enabled %}
+                <button id="btn-sync" class="btn btn-primary">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     Sync Lên Google Sheets
                 </button>
+                {% endif %}
+                {% endif %}
                 <form method="post" action="{{ url_for('logout') }}">
                     <button class="btn btn-secondary" type="submit">Đăng xuất</button>
                 </form>
@@ -38,7 +55,29 @@
                 <h2>Lịch Học Đồng Bộ</h2>
                 <p>Cập nhật lần cuối: {% if data.last_updated %}{{ (data.last_updated|string)[:10].split('-')|reverse|join('/') }}{% else %}Chưa có dữ liệu{% endif %}</p>
             </div>
-            
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label for="filter-class">Lọc theo lớp học</label>
+                    <select id="filter-class" class="filter-select">
+                        <option value="">Tất cả lớp</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-subject">Lọc theo môn</label>
+                    <select id="filter-subject" class="filter-select">
+                        <option value="">Tất cả môn</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-teacher">Lọc theo giảng viên</label>
+                    <select id="filter-teacher" class="filter-select">
+                        <option value="">Tất cả giảng viên</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button id="btn-clear-filters" class="btn btn-secondary" type="button">Xóa lọc</button>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -56,21 +95,21 @@
                     </thead>
                     <tbody>
                         {% for subj in data.subjects %}
-                        <tr class="subject-row status-{{ subj.trang_thai|lower|replace(' ', '-') }}{% if subj.is_low_class_count %} low-class-count{% endif %}" data-id="{{ subj.id }}" data-low-class-count="{{ 'true' if subj.is_low_class_count else 'false' }}">
+                        <tr class="subject-row status-{{ subj.trang_thai|lower|replace(' ', '-') }}{% if subj.is_low_class_count %} low-class-count{% endif %}" data-id="{{ subj.id }}" data-class-list="{{ subj.lop_hoc|join(',') }}" data-subject="{{ subj.ten_hoc_phan }}" data-teacher="{{ subj.giang_vien }}" data-low-class-count="{{ 'true' if subj.is_low_class_count else 'false' }}">
                             <td class="col-stt" data-label="STT">{{ subj.stt }}</td>
                             <td class="col-id" data-label="MÃ HP">{{ subj.ma_hp }}</td>
                             <td class="col-name" data-label="TÊN HỌC PHẦN">{{ subj.ten_hoc_phan }}</td>
                             <td class="col-tc" data-label="TC">{{ subj.tc }}</td>
                             <td class="col-teacher" data-label="GIẢNG VIÊN">{{ subj.giang_vien }}</td>
                             <td class="col-room" data-label="PHÒNG">
-                                {% if is_admin %}
+                                {% if can_edit %}
                                 <textarea class="admin-textarea room-editor" rows="3">{{ subj.phong_hoc }}</textarea>
                                 {% else %}
                                 <div class="room-input editable-field">{{ subj.phong_hoc }}</div>
                                 {% endif %}
                             </td>
                             <td class="col-time" data-label="THỜI GIAN">
-                                {% if is_admin %}
+                                {% if can_edit %}
                                 <textarea class="admin-textarea time-editor" rows="6">{{ subj.thoi_gian }}</textarea>
                                 {% else %}
                                 <div class="time-input editable-field schedule-list" data-raw-time="{{ subj.thoi_gian|e }}">
@@ -99,13 +138,14 @@
                                 {% endfor %}
                             </td>
                             <td class="col-status" data-label="TRẠNG THÁI">
-                                {% if is_admin %}
+                                {% if can_edit %}
                                 <select class="status-select" onchange="updateStatus('{{ subj.id }}', this.value)">
                                     <option value="Chưa học" {% if subj.trang_thai == 'Chưa học' %}selected{% endif %}>Chưa học</option>
                                     <option value="Đã học" {% if subj.trang_thai == 'Đã học' %}selected{% endif %}>Đã học</option>
                                     <option value="Học bù" {% if subj.trang_thai == 'Học bù' %}selected{% endif %}>Học bù</option>
                                 </select>
                                 <button class="btn btn-save-row" type="button" data-id="{{ subj.id }}">Lưu</button>
+                                <button class="btn btn-secondary btn-reset-row" type="button" data-id="{{ subj.id }}">Reset</button>
                                 {% else %}
                                 <span class="status-badge">{{ subj.trang_thai }}</span>
                                 {% endif %}
@@ -126,6 +166,13 @@
 
     <div id="toast" class="toast"></div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=4"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js');
+            });
+        }
+    </script>
 </body>
 </html>

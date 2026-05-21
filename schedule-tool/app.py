@@ -1,13 +1,17 @@
-from flask import Flask, render_template, request, jsonify, redirect, session, url_for
+from flask import Flask, render_template, request, jsonify, redirect, session, url_for, send_file, Response
 import json
 import os
 import threading
+from io import BytesIO
+from datetime import datetime
 from functools import wraps
 from dotenv import load_dotenv
 import gspread
+import xlsxwriter
 from google.oauth2.service_account import Credentials
 
 # Import from other scripts
+from auto_scrape import start_background_scheduler
 from scraper import scrape_dlu
 from sheets import sync_to_sheets
 
@@ -18,7 +22,9 @@ app.secret_key = os.getenv("SECRET_KEY", "dev-secret-change-me")
 DATA_FILE = "data.json"
 GOOGLE_SHEETS_ID = os.getenv("GOOGLE_SHEETS_ID")
 GOOGLE_SERVICE_ACCOUNT_JSON = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD") or (None if os.getenv("VERCEL") else "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD") or (
+    None if os.getenv("VERCEL") else "admin"
+)
 
 SHEET_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -33,26 +39,50 @@ SHEET_HEADERS = [
     "GIẢNG VIÊN",
     "PHÒNG HỌC",
     "THỜI GIAN",
+    "THỜI GIAN GỐC",
     "LỚP HỌC",
     "TRẠNG THÁI",
+    "UPDATED_AT",
 ]
 
+EXPORT_HEADERS = [
+    "STT",
+    "Mã HP",
+    "Tên học phần",
+    "TC",
+    "Giảng viên",
+    "Phòng học",
+    "Thời gian",
+    "Lớp học",
+    "Trạng thái",
+]
+
+
 def sheets_enabled():
-    return bool(GOOGLE_SHEETS_ID and (GOOGLE_SERVICE_ACCOUNT_JSON or os.path.exists("credentials.json")))
+    return bool(
+        GOOGLE_SHEETS_ID
+        and (GOOGLE_SERVICE_ACCOUNT_JSON or os.path.exists("credentials.json"))
+    )
+
 
 def get_sheet():
     if GOOGLE_SERVICE_ACCOUNT_JSON:
         credentials_info = json.loads(GOOGLE_SERVICE_ACCOUNT_JSON)
-        credentials = Credentials.from_service_account_info(credentials_info, scopes=SHEET_SCOPES)
+        credentials = Credentials.from_service_account_info(
+            credentials_info, scopes=SHEET_SCOPES
+        )
     else:
-        credentials = Credentials.from_service_account_file("credentials.json", scopes=SHEET_SCOPES)
+        credentials = Credentials.from_service_account_file(
+            "credentials.json", scopes=SHEET_SCOPES
+        )
 
     client = gspread.authorize(credentials)
     return client.open_by_key(GOOGLE_SHEETS_ID).sheet1
 
+
 def row_to_subject(index, row):
     padded = row + [""] * (len(SHEET_HEADERS) - len(row))
-    classes = normalize_class_list(padded[7].split(","))
+    classes = normalize_class_list(padded[8].split(","))
     ma_hp = padded[1].strip()
     return {
         "stt": padded[0] or index,
@@ -63,10 +93,12 @@ def row_to_subject(index, row):
         "giang_vien": padded[4],
         "phong_hoc": padded[5],
         "thoi_gian": padded[6],
-        "thoi_gian_goc": padded[6],
+        "thoi_gian_goc": padded[7] or padded[6],
         "lop_hoc": classes,
-        "trang_thai": padded[8] or "Chưa học",
+        "trang_thai": padded[9] or "Chưa học",
+        "updated_at": padded[10] or "",
     }
+
 
 def subject_to_row(subject):
     return [
@@ -77,12 +109,16 @@ def subject_to_row(subject):
         subject.get("giang_vien", ""),
         subject.get("phong_hoc", ""),
         subject.get("thoi_gian", ""),
+        subject.get("thoi_gian_goc", subject.get("thoi_gian", "")),
         ", ".join(normalize_class_list(subject.get("lop_hoc", []))),
         subject.get("trang_thai", "Chưa học"),
+        subject.get("updated_at", ""),
     ]
+
 
 def normalize_class_name(value):
     return " ".join(str(value).strip().replace("\u00d0", "\u0110").split())
+
 
 def normalize_class_list(values):
     normalized = []
@@ -92,11 +128,98 @@ def normalize_class_list(values):
             normalized.append(class_name)
     return normalized
 
+
+def normalize_filter_text(value):
+    return " ".join(str(value or "").strip().lower().split())
+
+
+def filter_export_subjects(
+    subjects, class_filter="", subject_filter="", teacher_filter=""
+):
+    class_filter = normalize_filter_text(class_filter)
+    subject_filter = normalize_filter_text(subject_filter)
+    teacher_filter = normalize_filter_text(teacher_filter)
+    filtered = []
+
+    for subject in subjects:
+        classes = [
+            normalize_filter_text(class_name)
+            for class_name in normalize_class_list(subject.get("lop_hoc", []))
+        ]
+        subject_name = normalize_filter_text(subject.get("ten_hoc_phan", ""))
+        teacher = normalize_filter_text(subject.get("giang_vien", ""))
+
+        if class_filter and class_filter not in classes:
+            continue
+        if subject_filter and subject_filter != subject_name:
+            continue
+        if teacher_filter and teacher_filter != teacher:
+            continue
+        filtered.append(subject)
+
+    return filtered
+
+
+def export_subject_to_row(index, subject):
+    return [
+        index,
+        subject.get("ma_hp", ""),
+        subject.get("ten_hoc_phan", ""),
+        subject.get("tc", ""),
+        subject.get("giang_vien", ""),
+        subject.get("phong_hoc", ""),
+        subject.get("thoi_gian", ""),
+        ", ".join(normalize_class_list(subject.get("lop_hoc", []))),
+        subject.get("trang_thai", ""),
+    ]
+
+
+def build_export_xlsx(subjects):
+    rows = [EXPORT_HEADERS]
+    rows.extend(export_subject_to_row(index, subject) for index, subject in enumerate(subjects, 1))
+
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output, {"in_memory": True, "strings_to_urls": False})
+    worksheet = workbook.add_worksheet("Lich hoc")
+    header_format = workbook.add_format(
+        {
+            "bold": True,
+            "font_color": "white",
+            "bg_color": "#111827",
+            "border": 1,
+            "align": "center",
+            "valign": "vcenter",
+        }
+    )
+    body_format = workbook.add_format(
+        {"border": 1, "valign": "top", "text_wrap": True}
+    )
+
+    widths = [8, 14, 36, 8, 24, 18, 48, 28, 18]
+    for col_index, width in enumerate(widths):
+        worksheet.set_column(col_index, col_index, width)
+
+    for row_index, row in enumerate(rows):
+        for col_index, value in enumerate(row):
+            cell_format = header_format if row_index == 0 else body_format
+            worksheet.write(row_index, col_index, value, cell_format)
+
+    worksheet.freeze_panes(1, 0)
+    worksheet.autofilter(0, 0, max(len(rows) - 1, 0), len(EXPORT_HEADERS) - 1)
+    workbook.close()
+    output.seek(0)
+    return output.getvalue()
+
+
 def load_data():
     if sheets_enabled():
         try:
             rows = get_sheet().get_all_values()
-            subjects = [row_to_subject(i, row) for i, row in enumerate(rows[1:], 1) if len(row) > 1 and row[1]]
+            subjects = [
+                row_to_subject(i, row)
+                for i, row in enumerate(rows[1:], 1)
+                if len(row) > 1 and row[1]
+            ]
             data = {"subjects": subjects, "last_updated": "Google Sheets"}
             # Đồng bộ ngược về database local để cập nhật cache
             try:
@@ -116,7 +239,9 @@ def load_data():
             pass
     return {"subjects": [], "last_updated": ""}
 
+
 def save_data(data):
+    data["last_updated"] = datetime.now().isoformat()
     # LUÔN LUÔN lưu dữ liệu vào database local trước (Source of Truth)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -132,6 +257,7 @@ def save_data(data):
         except Exception as e:
             print(f"Error updating Google Sheets: {e}")
 
+
 def prepare_data_for_view():
     data = load_data()
     subjects = data.get("subjects", [])
@@ -143,10 +269,29 @@ def prepare_data_for_view():
     data["subjects"] = sorted(subjects, key=subject_view_sort_key)
     return data
 
+
+def parse_updated_at(value):
+    try:
+        return datetime.fromisoformat(value)
+    except Exception:
+        return datetime.min
+
+
 def subject_view_sort_key(subject):
     status = subject.get("trang_thai", "").strip().lower()
-    is_done = status == "đã học"
-    return (0 if is_done else 1, subject.get("_view_index", 0))
+    status_priority = {
+        "chưa học": 0,
+        "học bù": 1,
+        "đã học": 2,
+    }
+    if status == "chưa học":
+        return (0, subject.get("_view_index", 0))
+    return (
+        status_priority.get(status, 1),
+        parse_updated_at(subject.get("updated_at", "")),
+        subject.get("_view_index", 0),
+    )
+
 
 def admin_required_json(view):
     @wraps(view)
@@ -154,7 +299,9 @@ def admin_required_json(view):
         if not session.get("admin_logged_in"):
             return jsonify({"success": False, "message": "Unauthorized"}), 401
         return view(*args, **kwargs)
+
     return wrapped
+
 
 def parse_schedule_time(value):
     entries = []
@@ -188,10 +335,12 @@ def parse_schedule_time(value):
 
     return entries
 
+
 def clean_period_label(period):
     label = period.replace("(Trực tiếp)", "")
     label = label.replace("(Trực tuyến)", "")
     return " ".join(label.split())
+
 
 def compact_periods(periods):
     cleaned = []
@@ -209,15 +358,67 @@ def compact_periods(periods):
 
     return cleaned
 
+
 @app.route("/")
 def index():
-    return render_template("index.html", data=prepare_data_for_view(), is_admin=False)
+    return render_template(
+        "index.html",
+        data=prepare_data_for_view(),
+        is_admin=False,
+        can_edit=False,
+        view_mode="view",
+        sheets_enabled=sheets_enabled(),
+    )
+
+
+@app.route("/manifest.webmanifest")
+def manifest():
+    with open(os.path.join(app.static_folder, "manifest.webmanifest"), encoding="utf-8") as f:
+        return Response(f.read(), mimetype="application/manifest+json")
+
+
+@app.route("/service-worker.js")
+def service_worker():
+    with open(os.path.join(app.static_folder, "service-worker.js"), encoding="utf-8") as f:
+        response = Response(f.read(), mimetype="application/javascript")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
 
 @app.route("/admin")
 def admin():
     if not session.get("admin_logged_in"):
         return redirect(url_for("login"))
-    return render_template("index.html", data=prepare_data_for_view(), is_admin=True)
+    view_mode = request.args.get("mode", "edit")
+    can_edit = view_mode != "view"
+    return render_template(
+        "index.html",
+        data=prepare_data_for_view(),
+        is_admin=True,
+        can_edit=can_edit,
+        view_mode=view_mode,
+        sheets_enabled=sheets_enabled(),
+    )
+
+
+@app.route("/api/export.xlsx")
+def export_excel():
+    data = prepare_data_for_view()
+    subjects = filter_export_subjects(
+        data.get("subjects", []),
+        class_filter=request.args.get("class", ""),
+        subject_filter=request.args.get("subject", ""),
+        teacher_filter=request.args.get("teacher", ""),
+    )
+    workbook = BytesIO(build_export_xlsx(subjects))
+    today = datetime.now().strftime("%Y%m%d")
+    return send_file(
+        workbook,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=f"lich-hoc-{today}.xlsx",
+    )
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -232,10 +433,12 @@ def login():
             error = "Sai mật khẩu."
     return render_template("login.html", error=error)
 
+
 @app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return redirect(url_for("index"))
+
 
 @app.route("/api/update", methods=["POST"])
 @admin_required_json
@@ -245,13 +448,13 @@ def update_subject():
     new_status = update_data.get("trang_thai")
     new_time = update_data.get("thoi_gian")
     new_room = update_data.get("phong_hoc")
-    
+
     if not subj_id:
         return jsonify({"success": False, "message": "Missing ID"})
-        
+
     data = load_data()
     subjects = data.get("subjects", [])
-    
+
     found = False
     for subj in subjects:
         if subj.get("id") == subj_id:
@@ -261,43 +464,107 @@ def update_subject():
                 subj["thoi_gian"] = new_time
             if new_room is not None:
                 subj["phong_hoc"] = new_room
+            subj["updated_at"] = datetime.now().isoformat()
             found = True
             break
-            
+
     if found:
         save_data(data)
-        return jsonify({"success": True})
+        return jsonify({"success": True, "subject": subj})
     else:
         return jsonify({"success": False, "message": "Subject not found"})
+
+
+@app.route("/api/reset", methods=["POST"])
+@admin_required_json
+def reset_subject():
+    request_data = request.json
+    subj_id = request_data.get("id")
+    if not subj_id:
+        return jsonify({"success": False, "message": "Missing ID"})
+
+    data = load_data()
+    subjects = data.get("subjects", [])
+    found = False
+
+    for subj in subjects:
+        if subj.get("id") == subj_id:
+            subj["thoi_gian"] = subj.get("thoi_gian_goc", subj.get("thoi_gian", ""))
+            subj["trang_thai"] = "Chưa học"
+            subj["updated_at"] = datetime.now().isoformat()
+            found = True
+            reset_subject = subj
+            break
+
+    if found:
+        save_data(data)
+        return jsonify(
+            {
+                "success": True,
+                "subject": {
+                    "id": reset_subject.get("id"),
+                    "thoi_gian": reset_subject.get("thoi_gian"),
+                    "trang_thai": reset_subject.get("trang_thai"),
+                    "phong_hoc": reset_subject.get("phong_hoc", ""),
+                },
+            }
+        )
+    else:
+        return jsonify({"success": False, "message": "Subject not found"})
+
 
 @app.route("/api/scrape", methods=["POST"])
 @admin_required_json
 def run_scrape():
     if os.getenv("VERCEL"):
-        return jsonify({
-            "success": False,
-            "message": "Scraper should run outside Vercel. Update data from admin or run the scraper locally."
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "message": "Scraper should run outside Vercel. Update data from admin or run the scraper locally.",
+            }
+        ), 400
 
     # Run in background to avoid blocking
     def background_task():
         scrape_dlu()
-        
+
     thread = threading.Thread(target=background_task)
     thread.start()
-    return jsonify({"success": True, "message": "Scraper is running in background. Please refresh in a few minutes."})
+    return jsonify(
+        {
+            "success": True,
+            "message": "Scraper is running in background. Please refresh in a few minutes.",
+        }
+    )
+
 
 @app.route("/api/sync", methods=["POST"])
 @admin_required_json
 def run_sync():
-    if sheets_enabled():
-        return jsonify({"success": True, "message": "Data is already stored in Google Sheets."})
+    if not sheets_enabled():
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "message": "Google Sheets chưa được cấu hình hoặc cấu hình chưa hợp lệ.",
+                }
+            ),
+            400,
+        )
 
     success = sync_to_sheets()
     if success:
-        return jsonify({"success": True, "message": "Synced to Google Sheets successfully."})
+        return jsonify(
+            {"success": True, "message": "Đã đồng bộ lên Google Sheets thành công."}
+        )
     else:
-        return jsonify({"success": False, "message": "Failed to sync. Check console logs."})
+        return jsonify(
+            {"success": False, "message": "Không thể đồng bộ. Kiểm tra log server."}
+        )
+
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    debug_mode = True
+    if os.getenv("WERKZEUG_RUN_MAIN") == "true" or not debug_mode:
+        start_background_scheduler()
+    app.run(debug=debug_mode, port=5001)

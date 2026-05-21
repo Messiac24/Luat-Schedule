@@ -1,0 +1,18 @@
+{
+  "name": "Luật Schedule",
+  "short_name": "Schedule",
+  "description": "Theo dõi lịch học cuối tuần và trạng thái học phần.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F9FAFB",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

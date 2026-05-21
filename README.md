@@ -1,27 +1,25 @@
-# Luật Schedule
+# Luat Schedule
 
-Ứng dụng quản lý lịch học đồng bộ cho sinh viên Đại Học Luật TPHCM.
+Responsive Flask/PWA app for viewing and managing DLU weekend class schedules.
 
-## 🚀 Tính Năng
+## Current Deployment Direction
 
-- 📅 Xem toàn bộ lịch học ở một nơi
-- 🔄 Đồng bộ hóa tự động với Google Sheets  
-- 🛡️ Bảo mật cao với xác thực
-- ⚡ Hiệu năng nhanh
-- 📱 Responsive cho mọi thiết bị
+- Public users use `/` to view schedules on mobile or desktop.
+- Admin uses `/admin` after login to update status, makeup schedules, room/time edits, scrape, and sync.
+- The app is installable as a PWA through the browser's "Add to Home Screen".
+- Google Sheets is the shared data store for deployed usage.
+- GitHub Actions runs the scraper every 3 days and syncs the merged result to Google Sheets.
 
-## 🌐 Truy Cập
+## Required Secrets
 
-- **Trang Chủ:** https://messiac24.github.io/Luat-Schedule/
-- **Ứng Dụng:** https://luat-schedule-production.up.railway.app/
-- **GitHub:** https://github.com/Messiac24/Luat-Schedule
+Configure these in GitHub Actions and deployment environment:
 
-## 💾 Backend
+- `DLU_USERNAME`
+- `DLU_PASSWORD`
+- `TARGET_CLASSES`
+- `GOOGLE_SHEETS_ID`
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
+- `ADMIN_PASSWORD`
+- `SECRET_KEY`
 
-- Python Flask
-- Google Sheets API
-- Railway.app hosting
-
-## 📝 Liên Hệ
-
-Vui lòng liên hệ qua GitHub Issues hoặc tác giả dự án.
+Set the deploy root to `schedule-tool`.

@@ -1,0 +1,34 @@
+# Secrets and local environment
+.env
+*.env
+schedule-tool/.env
+credentials.json
+schedule-tool/credentials.json
+*GOOGLE_SERVICE_ACCOUNT_JSON*
+
+# Python cache/build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local runtime state and logs
+server.log
+server.err.log
+schedule-tool/server.log
+schedule-tool/server.err.log
+.auto_scrape_state.json
+schedule-tool/.auto_scrape_state.json
+
+# Generated scraper/debug data
+api_dump.json
+schedule-tool/api_dump.json
+debug*.html
+schedule-tool/debug*.html
+
+# Local virtual environments
+.venv/
+venv/
+schedule-tool/.venv/
