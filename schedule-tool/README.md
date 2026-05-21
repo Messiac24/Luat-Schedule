@@ -1,53 +1,129 @@
-# DLU Schedule Tracker
+# Schedule Tool
 
-Flask app for public schedule viewing, admin updates, Google Sheets sync, PWA install, and automated DLU scraping.
+Flask application for viewing, editing, exporting, and refreshing DLU class schedules.
 
-## App Areas
+This directory is the deployable app root. Use the repository root README for the product overview; use this file when setting up local development, deployment, secrets, and scheduled scraping.
 
-- `/`: public read-only schedule for students.
-- `/admin`: admin edit mode, protected by `ADMIN_PASSWORD`.
-- `/admin?mode=view`: admin preview that renders like the public user view without logging out.
-- `/manifest.webmanifest` and `/service-worker.js`: PWA install support.
+## Routes
 
-## Local Setup
+| Route | Purpose |
+| --- | --- |
+| `/` | Public read-only schedule page. |
+| `/admin` | Admin edit workspace. Requires login. |
+| `/admin?mode=view` | Admin preview mode that renders like the public user view. |
+| `/login` | Admin login. |
+| `/api/export.xlsx` | Excel export using the current schedule/filter state. |
+| `/manifest.webmanifest` | PWA manifest. |
+| `/service-worker.js` | PWA service worker. |
+
+## Local Development
 
 ```cmd
-cd schedule-tool
 pip install -r requirements.txt
 playwright install chromium
+copy .env.example .env
 python app.py
 ```
 
-Local URL: `http://localhost:5001`
+Default local URL:
+
+```text
+http://localhost:5001
+```
 
 ## Environment Variables
 
-Required for deployed app and GitHub Actions:
+Use `.env.example` as the template:
 
-- `ADMIN_PASSWORD`: password for admin login.
-- `SECRET_KEY`: strong Flask session secret.
-- `DLU_USERNAME`: DLU Online username for scraper.
-- `DLU_PASSWORD`: DLU Online password for scraper.
-- `TARGET_CLASSES`: comma-separated class ids, for example `LHK50DL,LH26B2DL,LLT50DLCĐ,LLT50DLTC`.
-- `GOOGLE_SHEETS_ID`: Google Sheet id.
-- `GOOGLE_SERVICE_ACCOUNT_JSON`: full service account JSON content.
+```env
+DLU_USERNAME=
+DLU_PASSWORD=
+TARGET_CLASSES=
+GOOGLE_SHEETS_ID=
+GOOGLE_SERVICE_ACCOUNT_JSON=
+ADMIN_PASSWORD=
+SECRET_KEY=
+```
 
-Local development may also use `credentials.json` beside `sheets.py` instead of `GOOGLE_SERVICE_ACCOUNT_JSON`.
+Notes:
 
-## Deployment
+- `TARGET_CLASSES` is a comma-separated list, for example `LHK50DL,LH26B2DL,LLT50DLCĐ,LLT50DLTC`.
+- `GOOGLE_SERVICE_ACCOUNT_JSON` should contain the full Google service account JSON content in deployed environments.
+- Local development can also use `credentials.json` beside `sheets.py`, but that file must not be committed.
+- `ADMIN_PASSWORD` is required in production.
+- `SECRET_KEY` must be a strong random value in production.
 
-Use Vercel with root directory `schedule-tool` and the env vars above.
+## Data Flow
 
-Google Sheets is the durable data store in deployment. Do not rely on `data.json` for production persistence on serverless hosting.
+```text
+scraper.py
+  -> load current data from Google Sheets
+  -> scrape DLU Online
+  -> filter to Saturday/Sunday morning/afternoon
+  -> merge while preserving admin edits
+  -> sync merged data back to Google Sheets
+```
 
-## Automatic Scraping
+Admin-owned fields preserved during scrape merges:
 
-The workflow `.github/workflows/scrape-schedule.yml` runs every 3 days and can also be triggered manually.
+- `trang_thai`
+- `thoi_gian`
+- `phong_hoc`
+- `updated_at`
 
-The scraper:
+`data.json` is a local fallback. Do not treat it as the production database on serverless hosting.
 
-- logs into DLU Online using GitHub secrets,
-- reads the current Google Sheet before merging,
-- preserves admin-managed fields (`trang_thai`, `thoi_gian`, `phong_hoc`, `updated_at`),
-- keeps only Saturday/Sunday morning and afternoon schedules,
-- syncs the merged result back to Google Sheets.
+## GitHub Actions
+
+The scheduled workflow lives at:
+
+```text
+../.github/workflows/scrape-schedule.yml
+```
+
+It runs every 3 days and supports manual dispatch. Configure these repository secrets:
+
+- `DLU_USERNAME`
+- `DLU_PASSWORD`
+- `TARGET_CLASSES`
+- `GOOGLE_SHEETS_ID`
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
+
+## Vercel Deployment
+
+Use these settings:
+
+- Root Directory: `schedule-tool`
+- Framework Preset: Other
+- Build/runtime: configured by `vercel.json`
+- Environment Variables: set in Vercel Project Settings, not in Git
+
+Required Vercel variables:
+
+- `ADMIN_PASSWORD`
+- `SECRET_KEY`
+- `GOOGLE_SHEETS_ID`
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
+
+Add scraper variables too if the deployed admin scrape button should work:
+
+- `DLU_USERNAME`
+- `DLU_PASSWORD`
+- `TARGET_CLASSES`
+
+## Tests
+
+Run from this directory:
+
+```cmd
+python -m unittest discover tests
+python -m py_compile app.py auto_scrape.py scraper.py sheets.py
+node tests\static_app_js.test.js
+```
+
+## Security Checklist
+
+- Keep `.env` local.
+- Rotate any credential that was ever committed before history cleanup.
+- Store production secrets in Vercel Environment Variables and GitHub Actions Secrets.
+- Do not commit `credentials.json`, logs, debug HTML, pycache, or scraper dumps.
