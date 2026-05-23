@@ -12,14 +12,14 @@ Luat Schedule gives students a clean public page to check class schedules, while
 - Excel export that respects the current filters.
 - PWA install support through browser "Add to Home Screen".
 - Google Sheets sync for a shared production data source.
-- GitHub Actions scraper that runs every 3 days and can be triggered manually.
+- GitHub Actions scraper that runs daily at 05:00 Vietnam time and can be triggered manually.
 
 ## Architecture
 
 ```text
 DLU Online
    |
-   |  scheduled scrape, every 3 days
+   |  scheduled scrape, daily at 05:00 Vietnam time
    v
 GitHub Actions ---- merge rules ---- Google Sheets
                                       ^
@@ -90,7 +90,7 @@ Recommended free path:
 4. Add the environment variables in Vercel Project Settings.
 5. Add the scraper secrets in GitHub repository secrets.
 
-GitHub Actions uses `.github/workflows/scrape-schedule.yml` to refresh Google Sheets every 3 days.
+GitHub Actions uses `.github/workflows/scrape-schedule.yml` to refresh Google Sheets daily at 05:00 Vietnam time.
 
 ## Validation
 

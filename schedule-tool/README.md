@@ -84,7 +84,7 @@ The scheduled workflow lives at:
 ../.github/workflows/scrape-schedule.yml
 ```
 
-It runs every 3 days and supports manual dispatch. Configure these repository secrets:
+It runs daily at 05:00 Vietnam time and supports manual dispatch. Configure these repository secrets:
 
 - `DLU_USERNAME`
 - `DLU_PASSWORD`
