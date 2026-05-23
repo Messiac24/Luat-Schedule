@@ -6,6 +6,7 @@ const CLASS_CODE_MAP = {
 };
 
 let classMapEnabled = false;
+let activeScheduleFilter = 'all';
 
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
@@ -144,11 +145,83 @@ function normalizeFilterText(value) {
     return String(value || '').trim().toLowerCase();
 }
 
-function rowMatchesFilters(row, classFilter, subjectFilter, teacherFilter) {
+function startOfDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function startOfWeek(date) {
+    const day = date.getDay() || 7;
+    const start = startOfDay(date);
+    start.setDate(start.getDate() - day + 1);
+    return start;
+}
+
+function getRowScheduleDates(row) {
+    const rawTime = row.querySelector('.schedule-list')?.dataset.rawTime
+        || row.querySelector('.time-editor')?.value
+        || '';
+    const dates = [];
+    const datePattern = /(\d{2})\/(\d{2})\/(\d{4})/g;
+    let match;
+
+    while ((match = datePattern.exec(rawTime)) !== null) {
+        const day = Number(match[1]);
+        const month = Number(match[2]) - 1;
+        const year = Number(match[3]);
+        dates.push(new Date(year, month, day));
+    }
+
+    return dates;
+}
+
+function rowMatchesScheduleFilter(row, scheduleFilter) {
+    if (scheduleFilter === 'all') return true;
+
+    const today = startOfDay(new Date());
+    const dates = getRowScheduleDates(row).map(startOfDay);
+    if (!dates.length) return false;
+
+    if (scheduleFilter === 'today') {
+        return dates.some((date) => date.getTime() === today.getTime());
+    }
+
+    if (scheduleFilter === 'week') {
+        const weekStart = startOfWeek(today);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        return dates.some((date) => date >= weekStart && date <= weekEnd);
+    }
+
+    if (scheduleFilter === 'upcoming') {
+        return dates.some((date) => date >= today);
+    }
+
+    return true;
+}
+
+function rowMatchesSearch(row, searchText) {
+    if (!searchText) return true;
+    const haystack = normalizeFilterText([
+        row.dataset.id,
+        row.dataset.subject,
+        row.dataset.teacher,
+        row.dataset.classList,
+        row.textContent,
+    ].join(' '));
+    return haystack.includes(searchText);
+}
+
+function rowMatchesFilters(row, classFilter, subjectFilter, teacherFilter, searchText, scheduleFilter) {
     const rowClasses = normalizeFilterText(row.dataset.classList);
     const rowSubject = normalizeFilterText(row.dataset.subject);
     const rowTeacher = normalizeFilterText(row.dataset.teacher);
 
+    if (!rowMatchesSearch(row, searchText)) {
+        return false;
+    }
+    if (!rowMatchesScheduleFilter(row, scheduleFilter)) {
+        return false;
+    }
     if (classFilter && !rowClasses.split(',').map((cls) => cls.trim()).includes(classFilter)) {
         return false;
     }
@@ -185,12 +258,20 @@ function initSelectOptions(attribute, elementId, defaultText) {
 }
 
 function applyFilters() {
+    const searchText = normalizeFilterText(document.getElementById('filter-search')?.value);
     const classFilter = normalizeFilterText(document.getElementById('filter-class')?.value);
     const subjectFilter = normalizeFilterText(document.getElementById('filter-subject')?.value);
     const teacherFilter = normalizeFilterText(document.getElementById('filter-teacher')?.value);
 
     document.querySelectorAll('tbody tr[data-id]').forEach((row) => {
-        row.style.display = rowMatchesFilters(row, classFilter, subjectFilter, teacherFilter) ? '' : 'none';
+        row.style.display = rowMatchesFilters(
+            row,
+            classFilter,
+            subjectFilter,
+            teacherFilter,
+            searchText,
+            activeScheduleFilter,
+        ) ? '' : 'none';
     });
 }
 
@@ -199,10 +280,13 @@ function buildExportUrl() {
     const classFilter = document.getElementById('filter-class')?.value || '';
     const subjectFilter = document.getElementById('filter-subject')?.value || '';
     const teacherFilter = document.getElementById('filter-teacher')?.value || '';
+    const searchText = document.getElementById('filter-search')?.value || '';
 
     if (classFilter) params.set('class', classFilter);
     if (subjectFilter) params.set('subject', subjectFilter);
     if (teacherFilter) params.set('teacher', teacherFilter);
+    if (searchText) params.set('q', searchText);
+    if (activeScheduleFilter !== 'all') params.set('range', activeScheduleFilter);
 
     const query = params.toString();
     return query ? `/api/export.xlsx?${query}` : '/api/export.xlsx';
@@ -357,24 +441,42 @@ if (scrapeButton) {
 const clearFiltersButton = document.getElementById('btn-clear-filters');
 if (clearFiltersButton) {
     clearFiltersButton.addEventListener('click', () => {
+        const searchFilter = document.getElementById('filter-search');
         const classFilter = document.getElementById('filter-class');
         const subjectFilter = document.getElementById('filter-subject');
         const teacherFilter = document.getElementById('filter-teacher');
 
+        if (searchFilter) searchFilter.value = '';
         if (classFilter) classFilter.value = '';
         if (subjectFilter) subjectFilter.value = '';
         if (teacherFilter) teacherFilter.value = '';
+        activeScheduleFilter = 'all';
+        document.querySelectorAll('.quick-filter-btn').forEach((button) => {
+            button.classList.toggle('active', button.dataset.scheduleFilter === 'all');
+        });
         applyFilters();
     });
 }
 
+const filterSearch = document.getElementById('filter-search');
 const filterClass = document.getElementById('filter-class');
 const filterSubject = document.getElementById('filter-subject');
 const filterTeacher = document.getElementById('filter-teacher');
 
+if (filterSearch) filterSearch.addEventListener('input', applyFilters);
 if (filterClass) filterClass.addEventListener('change', applyFilters);
 if (filterSubject) filterSubject.addEventListener('change', applyFilters);
 if (filterTeacher) filterTeacher.addEventListener('change', applyFilters);
+
+document.querySelectorAll('.quick-filter-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+        activeScheduleFilter = button.dataset.scheduleFilter || 'all';
+        document.querySelectorAll('.quick-filter-btn').forEach((item) => {
+            item.classList.toggle('active', item === button);
+        });
+        applyFilters();
+    });
+});
 
 const classToggleButton = document.getElementById('btn-toggle-class-map');
 if (classToggleButton) {

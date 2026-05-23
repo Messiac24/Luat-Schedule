@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=5">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6">
 </head>
 <body>
     <header class="app-header">
@@ -58,6 +58,19 @@
                 <p>Cập nhật lần cuối: {% if data.last_updated %}{{ (data.last_updated|string)[:10].split('-')|reverse|join('/') }}{% else %}Chưa có dữ liệu{% endif %}</p>
             </div>
             <div id="filter-panel" class="filter-bar">
+                <div class="filter-group filter-search-group">
+                    <label for="filter-search">Tìm nhanh</label>
+                    <input id="filter-search" class="filter-input" type="search" placeholder="Môn, mã HP, giảng viên">
+                </div>
+                <div class="filter-group filter-quick-group">
+                    <label>Lọc nhanh</label>
+                    <div class="quick-filter" role="group" aria-label="Lọc nhanh theo thời gian">
+                        <button class="quick-filter-btn active" type="button" data-schedule-filter="all">All</button>
+                        <button class="quick-filter-btn" type="button" data-schedule-filter="today">Today</button>
+                        <button class="quick-filter-btn" type="button" data-schedule-filter="week">This Week</button>
+                        <button class="quick-filter-btn" type="button" data-schedule-filter="upcoming">Upcoming</button>
+                    </div>
+                </div>
                 <div class="filter-group">
                     <label for="filter-class">Lọc theo lớp học</label>
                     <select id="filter-class" class="filter-select">
@@ -168,7 +181,7 @@
 
     <div id="toast" class="toast"></div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}?v=4"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=5"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

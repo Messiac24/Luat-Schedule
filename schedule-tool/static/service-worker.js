@@ -1,4 +1,4 @@
-const CACHE_NAME = 'luat-schedule-static-v1';
+const CACHE_NAME = 'luat-schedule-static-v2';
 const STATIC_ASSETS = [
   '/static/css/style.css',
   '/static/js/app.js',
