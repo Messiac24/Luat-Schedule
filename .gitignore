@@ -32,3 +32,6 @@ schedule-tool/debug*.html
 .venv/
 venv/
 schedule-tool/.venv/
+
+# Local agent workspace
+.agent/
