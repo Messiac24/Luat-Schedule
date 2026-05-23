@@ -1,5 +1,6 @@
 import unittest
 import zipfile
+from datetime import date
 from io import BytesIO
 
 import app
@@ -28,6 +29,51 @@ class ExportExcelTests(unittest.TestCase):
             subject_filter="mon a",
             teacher_filter="gv a",
         )
+
+        self.assertEqual([subject["ma_hp"] for subject in filtered], ["LAW101"])
+
+    def test_filters_export_subjects_by_search_and_schedule_range(self):
+        subjects = [
+            {
+                "ma_hp": "LAW101",
+                "ten_hoc_phan": "Mon A",
+                "giang_vien": "GV A",
+                "thoi_gian": "25/05/2026 - Sang",
+                "lop_hoc": ["LH26B2DL"],
+            },
+            {
+                "ma_hp": "LAW102",
+                "ten_hoc_phan": "Mon B",
+                "giang_vien": "GV B",
+                "thoi_gian": "10/06/2026 - Sang",
+                "lop_hoc": ["LLT50DLTC"],
+            },
+        ]
+
+        original_datetime = app.datetime
+
+        class FixedDatetime:
+            @classmethod
+            def now(cls):
+                class FixedNow:
+                    def date(self):
+                        return date(2026, 5, 23)
+
+                return FixedNow()
+
+            @staticmethod
+            def strptime(value, fmt):
+                return original_datetime.strptime(value, fmt)
+
+        app.datetime = FixedDatetime
+        try:
+            filtered = app.filter_export_subjects(
+                subjects,
+                search_filter="law101",
+                schedule_filter="upcoming",
+            )
+        finally:
+            app.datetime = original_datetime
 
         self.assertEqual([subject["ma_hp"] for subject in filtered], ["LAW101"])
 

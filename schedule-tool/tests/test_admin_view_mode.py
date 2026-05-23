@@ -95,6 +95,36 @@ class AdminViewModeTests(unittest.TestCase):
         self.assertNotIn("btn-save-row", html)
         self.assertNotIn("Xem như người dùng", html)
 
+    def test_update_rejects_invalid_status(self):
+        self.login()
+
+        response = self.client.post(
+            "/api/update",
+            json={"id": "LAW101", "trang_thai": "Invalid"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.get_json()["success"])
+
+    def test_update_reports_save_failure(self):
+        self.login()
+        original_load_data = app.load_data
+        original_save_data = app.save_data
+        app.load_data = lambda: {"subjects": [dict(SAMPLE_DATA["subjects"][0])]}
+        app.save_data = lambda data: False
+
+        try:
+            response = self.client.post(
+                "/api/update",
+                json={"id": "LAW101", "trang_thai": "Chưa học"},
+            )
+        finally:
+            app.load_data = original_load_data
+            app.save_data = original_save_data
+
+        self.assertEqual(response.status_code, 500)
+        self.assertFalse(response.get_json()["success"])
+
     def test_empty_state_points_to_github_actions_scrape(self):
         app.prepare_data_for_view = lambda: {"subjects": [], "last_updated": ""}
 

@@ -1,18 +1,16 @@
 from flask import Flask, render_template, request, jsonify, redirect, session, url_for, send_file, Response
 import json
 import os
+import re
 import threading
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from dotenv import load_dotenv
 import gspread
 import xlsxwriter
 from google.oauth2.service_account import Credentials
 
-# Import from other scripts
-from auto_scrape import start_background_scheduler
-from scraper import scrape_dlu
 from sheets import sync_to_sheets
 
 load_dotenv()
@@ -25,6 +23,9 @@ GOOGLE_SERVICE_ACCOUNT_JSON = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD") or (
     None if os.getenv("VERCEL") else "admin"
 )
+ALLOWED_STATUSES = {"Chưa học", "Đã học", "Học bù"}
+MAX_TIME_LENGTH = 5000
+MAX_ROOM_LENGTH = 1000
 
 SHEET_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -137,12 +138,76 @@ def normalize_filter_text(value):
     return " ".join(str(value or "").strip().lower().split())
 
 
+def parse_schedule_dates(value):
+    dates = []
+    for match in re.finditer(r"(\d{2})/(\d{2})/(\d{4})", value or ""):
+        try:
+            dates.append(datetime.strptime(match.group(0), "%d/%m/%Y").date())
+        except ValueError:
+            pass
+    return dates
+
+
+def subject_matches_search(subject, search_filter):
+    if not search_filter:
+        return True
+
+    fields = [
+        subject.get("id", ""),
+        subject.get("ma_hp", ""),
+        subject.get("ten_hoc_phan", ""),
+        subject.get("giang_vien", ""),
+        subject.get("phong_hoc", ""),
+        subject.get("thoi_gian", ""),
+        " ".join(normalize_class_list(subject.get("lop_hoc", []))),
+    ]
+    return search_filter in normalize_filter_text(" ".join(fields))
+
+
+def subject_matches_schedule_filter(subject, schedule_filter, today=None):
+    if not schedule_filter or schedule_filter == "all":
+        return True
+
+    dates = parse_schedule_dates(subject.get("thoi_gian", ""))
+    if not dates:
+        return False
+
+    today = today or datetime.now().date()
+    if schedule_filter == "today":
+        return any(schedule_date == today for schedule_date in dates)
+    if schedule_filter == "week":
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        return any(week_start <= schedule_date <= week_end for schedule_date in dates)
+    if schedule_filter == "upcoming":
+        return any(schedule_date >= today for schedule_date in dates)
+
+    return True
+
+
+def validate_optional_text(value, max_length, field_name):
+    if value is None:
+        return None, None
+    if not isinstance(value, str):
+        return None, f"{field_name} must be text"
+    if len(value) > max_length:
+        return None, f"{field_name} is too long"
+    return value, None
+
+
 def filter_export_subjects(
-    subjects, class_filter="", subject_filter="", teacher_filter=""
+    subjects,
+    class_filter="",
+    subject_filter="",
+    teacher_filter="",
+    search_filter="",
+    schedule_filter="",
 ):
     class_filter = normalize_filter_text(class_filter)
     subject_filter = normalize_filter_text(subject_filter)
     teacher_filter = normalize_filter_text(teacher_filter)
+    search_filter = normalize_filter_text(search_filter)
+    schedule_filter = normalize_filter_text(schedule_filter)
     filtered = []
 
     for subject in subjects:
@@ -153,6 +218,10 @@ def filter_export_subjects(
         subject_name = normalize_filter_text(subject.get("ten_hoc_phan", ""))
         teacher = normalize_filter_text(subject.get("giang_vien", ""))
 
+        if not subject_matches_search(subject, search_filter):
+            continue
+        if not subject_matches_schedule_filter(subject, schedule_filter):
+            continue
         if class_filter and class_filter not in classes:
             continue
         if subject_filter and subject_filter != subject_name:
@@ -215,6 +284,19 @@ def build_export_xlsx(subjects):
     return output.getvalue()
 
 
+def cache_local_data(data):
+    if is_vercel_runtime():
+        return True
+
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"Error caching data to local file: {e}")
+        return False
+
+
 def load_data():
     if sheets_enabled():
         try:
@@ -225,12 +307,7 @@ def load_data():
                 if len(row) > 1 and row[1]
             ]
             data = {"subjects": subjects, "last_updated": "Google Sheets"}
-            # Đồng bộ ngược về database local để cập nhật cache
-            try:
-                with open(DATA_FILE, "w", encoding="utf-8") as f:
-                    json.dump(data, f, ensure_ascii=False, indent=2)
-            except Exception as e:
-                print(f"Error caching Google Sheets data to local: {e}")
+            cache_local_data(data)
             return data
         except Exception as e:
             print(f"Error loading Google Sheets data: {e}")
@@ -246,11 +323,6 @@ def load_data():
 
 def save_data(data):
     data["last_updated"] = datetime.now().isoformat()
-    # LUÔN LUÔN lưu dữ liệu vào database local trước (Source of Truth)
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-    # Nếu có Google Sheets thì đồng bộ thêm lên Sheets
     if sheets_enabled():
         try:
             sheet = get_sheet()
@@ -258,8 +330,13 @@ def save_data(data):
             rows.extend(subject_to_row(subject) for subject in data.get("subjects", []))
             sheet.clear()
             sheet.update("A1", rows)
+            cache_local_data(data)
+            return True
         except Exception as e:
             print(f"Error updating Google Sheets: {e}")
+            return False
+
+    return cache_local_data(data)
 
 
 def prepare_data_for_view():
@@ -415,6 +492,8 @@ def export_excel():
         class_filter=request.args.get("class", ""),
         subject_filter=request.args.get("subject", ""),
         teacher_filter=request.args.get("teacher", ""),
+        search_filter=request.args.get("q", ""),
+        schedule_filter=request.args.get("range", ""),
     )
     workbook = BytesIO(build_export_xlsx(subjects))
     today = datetime.now().strftime("%Y%m%d")
@@ -449,14 +528,31 @@ def logout():
 @app.route("/api/update", methods=["POST"])
 @admin_required_json
 def update_subject():
-    update_data = request.json
-    subj_id = update_data.get("id")
+    update_data = request.get_json(silent=True) or {}
+    subj_id = str(update_data.get("id", "")).strip()
     new_status = update_data.get("trang_thai")
     new_time = update_data.get("thoi_gian")
     new_room = update_data.get("phong_hoc")
 
     if not subj_id:
-        return jsonify({"success": False, "message": "Missing ID"})
+        return jsonify({"success": False, "message": "Missing ID"}), 400
+
+    if new_status is not None:
+        new_status = str(new_status).strip()
+        if new_status not in ALLOWED_STATUSES:
+            return jsonify({"success": False, "message": "Invalid status"}), 400
+
+    new_time, time_error = validate_optional_text(
+        new_time, MAX_TIME_LENGTH, "thoi_gian"
+    )
+    if time_error:
+        return jsonify({"success": False, "message": time_error}), 400
+
+    new_room, room_error = validate_optional_text(
+        new_room, MAX_ROOM_LENGTH, "phong_hoc"
+    )
+    if room_error:
+        return jsonify({"success": False, "message": room_error}), 400
 
     data = load_data()
     subjects = data.get("subjects", [])
@@ -475,19 +571,20 @@ def update_subject():
             break
 
     if found:
-        save_data(data)
+        if not save_data(data):
+            return jsonify({"success": False, "message": "Unable to save data"}), 500
         return jsonify({"success": True, "subject": subj})
     else:
-        return jsonify({"success": False, "message": "Subject not found"})
+        return jsonify({"success": False, "message": "Subject not found"}), 404
 
 
 @app.route("/api/reset", methods=["POST"])
 @admin_required_json
 def reset_subject():
-    request_data = request.json
-    subj_id = request_data.get("id")
+    request_data = request.get_json(silent=True) or {}
+    subj_id = str(request_data.get("id", "")).strip()
     if not subj_id:
-        return jsonify({"success": False, "message": "Missing ID"})
+        return jsonify({"success": False, "message": "Missing ID"}), 400
 
     data = load_data()
     subjects = data.get("subjects", [])
@@ -503,7 +600,8 @@ def reset_subject():
             break
 
     if found:
-        save_data(data)
+        if not save_data(data):
+            return jsonify({"success": False, "message": "Unable to save data"}), 500
         return jsonify(
             {
                 "success": True,
@@ -516,7 +614,7 @@ def reset_subject():
             }
         )
     else:
-        return jsonify({"success": False, "message": "Subject not found"})
+        return jsonify({"success": False, "message": "Subject not found"}), 404
 
 
 @app.route("/api/scrape", methods=["POST"])
@@ -529,6 +627,8 @@ def run_scrape():
                 "message": "Scraper should run outside Vercel. Update data from admin or run the scraper locally.",
             }
         ), 400
+
+    from scraper import scrape_dlu
 
     # Run in background to avoid blocking
     def background_task():
@@ -572,5 +672,7 @@ def run_sync():
 if __name__ == "__main__":
     debug_mode = True
     if os.getenv("WERKZEUG_RUN_MAIN") == "true" or not debug_mode:
+        from auto_scrape import start_background_scheduler
+
         start_background_scheduler()
     app.run(debug=debug_mode, port=5001)
