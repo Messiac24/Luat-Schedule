@@ -228,6 +228,15 @@ def build_export_xlsx(subjects):
     return output.getvalue()
 
 
+def latest_subject_updated_at(subjects):
+    latest = datetime.min
+    for subject in subjects:
+        updated_at = parse_updated_at(subject.get("updated_at", ""))
+        if updated_at > latest:
+            latest = updated_at
+    return latest.isoformat() if latest != datetime.min else ""
+
+
 def cache_local_data(data):
     if is_vercel_runtime():
         return True
@@ -250,7 +259,10 @@ def load_data():
                 for i, row in enumerate(rows[1:], 1)
                 if len(row) > 1 and row[1]
             ]
-            data = {"subjects": subjects, "last_updated": "Google Sheets"}
+            data = {
+                "subjects": subjects,
+                "last_updated": latest_subject_updated_at(subjects),
+            }
             cache_local_data(data)
             return data
         except Exception as e:

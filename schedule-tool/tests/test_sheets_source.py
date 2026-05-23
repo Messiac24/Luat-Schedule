@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 import scraper
+import app
 import sheets
 
 
@@ -50,6 +51,45 @@ class SheetsSourceTests(unittest.TestCase):
 
         with patch.object(scraper, "load_from_sheets", return_value=sheets_data):
             self.assertEqual(scraper.load_existing_data(), sheets_data)
+
+    def test_app_load_data_uses_latest_sheet_updated_at(self):
+        sheet = Mock()
+        sheet.get_all_values.return_value = [
+            app.SHEET_HEADERS,
+            [
+                "1",
+                "LAW101",
+                "Mon A",
+                "3",
+                "GV A",
+                "A101",
+                "01/06/2026 - Sang",
+                "01/06/2026 - Sang",
+                "LH26B2DL",
+                "Chua hoc",
+                "2026-05-20T08:00:00",
+            ],
+            [
+                "2",
+                "LAW102",
+                "Mon B",
+                "2",
+                "GV B",
+                "A102",
+                "02/06/2026 - Sang",
+                "02/06/2026 - Sang",
+                "LH26B2DL",
+                "Chua hoc",
+                "2026-05-22T09:30:00",
+            ],
+        ]
+
+        with patch.object(app, "sheets_enabled", return_value=True), patch.object(
+            app, "get_sheet", return_value=sheet
+        ), patch.object(app, "cache_local_data", return_value=True):
+            data = app.load_data()
+
+        self.assertEqual(data["last_updated"], "2026-05-22T09:30:00")
 
 
 if __name__ == "__main__":
