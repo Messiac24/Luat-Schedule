@@ -1,10 +1,9 @@
 from flask import Flask, render_template, request, jsonify, redirect, session, url_for, send_file, Response
 import json
 import os
-import re
 import threading
 from io import BytesIO
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import wraps
 from dotenv import load_dotenv
 import gspread
@@ -138,53 +137,6 @@ def normalize_filter_text(value):
     return " ".join(str(value or "").strip().lower().split())
 
 
-def parse_schedule_dates(value):
-    dates = []
-    for match in re.finditer(r"(\d{2})/(\d{2})/(\d{4})", value or ""):
-        try:
-            dates.append(datetime.strptime(match.group(0), "%d/%m/%Y").date())
-        except ValueError:
-            pass
-    return dates
-
-
-def subject_matches_search(subject, search_filter):
-    if not search_filter:
-        return True
-
-    fields = [
-        subject.get("id", ""),
-        subject.get("ma_hp", ""),
-        subject.get("ten_hoc_phan", ""),
-        subject.get("giang_vien", ""),
-        subject.get("phong_hoc", ""),
-        subject.get("thoi_gian", ""),
-        " ".join(normalize_class_list(subject.get("lop_hoc", []))),
-    ]
-    return search_filter in normalize_filter_text(" ".join(fields))
-
-
-def subject_matches_schedule_filter(subject, schedule_filter, today=None):
-    if not schedule_filter or schedule_filter == "all":
-        return True
-
-    dates = parse_schedule_dates(subject.get("thoi_gian", ""))
-    if not dates:
-        return False
-
-    today = today or datetime.now().date()
-    if schedule_filter == "today":
-        return any(schedule_date == today for schedule_date in dates)
-    if schedule_filter == "week":
-        week_start = today - timedelta(days=today.weekday())
-        week_end = week_start + timedelta(days=6)
-        return any(week_start <= schedule_date <= week_end for schedule_date in dates)
-    if schedule_filter == "upcoming":
-        return any(schedule_date >= today for schedule_date in dates)
-
-    return True
-
-
 def validate_optional_text(value, max_length, field_name):
     if value is None:
         return None, None
@@ -200,14 +152,10 @@ def filter_export_subjects(
     class_filter="",
     subject_filter="",
     teacher_filter="",
-    search_filter="",
-    schedule_filter="",
 ):
     class_filter = normalize_filter_text(class_filter)
     subject_filter = normalize_filter_text(subject_filter)
     teacher_filter = normalize_filter_text(teacher_filter)
-    search_filter = normalize_filter_text(search_filter)
-    schedule_filter = normalize_filter_text(schedule_filter)
     filtered = []
 
     for subject in subjects:
@@ -218,10 +166,6 @@ def filter_export_subjects(
         subject_name = normalize_filter_text(subject.get("ten_hoc_phan", ""))
         teacher = normalize_filter_text(subject.get("giang_vien", ""))
 
-        if not subject_matches_search(subject, search_filter):
-            continue
-        if not subject_matches_schedule_filter(subject, schedule_filter):
-            continue
         if class_filter and class_filter not in classes:
             continue
         if subject_filter and subject_filter != subject_name:
@@ -492,8 +436,6 @@ def export_excel():
         class_filter=request.args.get("class", ""),
         subject_filter=request.args.get("subject", ""),
         teacher_filter=request.args.get("teacher", ""),
-        search_filter=request.args.get("q", ""),
-        schedule_filter=request.args.get("range", ""),
     )
     workbook = BytesIO(build_export_xlsx(subjects))
     today = datetime.now().strftime("%Y%m%d")

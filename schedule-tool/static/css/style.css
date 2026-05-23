@@ -234,45 +234,6 @@ main::after {
     background: #FFFFFF;
 }
 
-.filter-search-group {
-    min-width: 220px;
-}
-
-.filter-quick-group {
-    min-width: 260px;
-}
-
-.quick-filter {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    background: #FFFFFF;
-}
-
-.quick-filter-btn {
-    min-height: 38px;
-    padding: 8px 10px;
-    border: 0;
-    border-right: 1px solid var(--color-border);
-    background: #FFFFFF;
-    color: var(--color-text-secondary);
-    font: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.quick-filter-btn:last-child {
-    border-right: 0;
-}
-
-.quick-filter-btn.active {
-    background: var(--color-primary);
-    color: #FFFFFF;
-}
-
 .filter-actions {
     display: flex;
     align-items: center;
