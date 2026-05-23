@@ -47,11 +47,14 @@ The scraper also keeps the app's business rule: only Saturday/Sunday morning and
 - GitHub Actions
 - Vercel Python runtime
 
+`schedule-tool/requirements.txt` is intentionally lightweight for Vercel. Scraper-only dependencies live in `schedule-tool/requirements-scraper.txt`.
+
 ## Quick Start
 
 ```cmd
 cd schedule-tool
 pip install -r requirements.txt
+pip install -r requirements-scraper.txt
 playwright install chromium
 copy .env.example .env
 python app.py

@@ -20,10 +20,13 @@ This directory is the deployable app root. Use the repository root README for th
 
 ```cmd
 pip install -r requirements.txt
+pip install -r requirements-scraper.txt
 playwright install chromium
 copy .env.example .env
 python app.py
 ```
+
+`requirements.txt` is the lightweight Vercel web runtime. Install `requirements-scraper.txt` only when running the scraper locally or in GitHub Actions.
 
 Default local URL:
 
@@ -97,6 +100,7 @@ Use these settings:
 - Framework Preset: Other
 - Build/runtime: configured by `vercel.json`
 - Environment Variables: set in Vercel Project Settings, not in Git
+- Dependencies: Vercel installs `requirements.txt`; scraper-only packages are excluded from the web runtime.
 
 Required Vercel variables:
 
