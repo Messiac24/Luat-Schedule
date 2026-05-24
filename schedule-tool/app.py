@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, session, url_for, send_file, Response
+from flask import Flask, render_template, request, jsonify, redirect, session, url_for, send_file, Response, make_response
 import json
 import os
 import threading
@@ -43,6 +43,7 @@ SHEET_HEADERS = [
     "LỚP HỌC",
     "TRẠNG THÁI",
     "UPDATED_AT",
+    "LAST_SCRAPED",
 ]
 
 EXPORT_HEADERS = [
@@ -101,6 +102,7 @@ def row_to_subject(index, row):
         "lop_hoc": classes,
         "trang_thai": padded[9] or "Chưa học",
         "updated_at": padded[10] or "",
+        "last_scraped": padded[11] or "",
     }
 
 
@@ -117,6 +119,7 @@ def subject_to_row(subject):
         ", ".join(normalize_class_list(subject.get("lop_hoc", []))),
         subject.get("trang_thai", "Chưa học"),
         subject.get("updated_at", ""),
+        subject.get("last_scraped", ""),
     ]
 
 
@@ -231,9 +234,10 @@ def build_export_xlsx(subjects):
 def latest_subject_updated_at(subjects):
     latest = datetime.min
     for subject in subjects:
-        updated_at = parse_updated_at(subject.get("updated_at", ""))
-        if updated_at > latest:
-            latest = updated_at
+        for field_name in ("last_scraped", "updated_at"):
+            updated_at = parse_updated_at(subject.get(field_name, ""))
+            if updated_at > latest:
+                latest = updated_at
     return latest.isoformat() if latest != datetime.min else ""
 
 
@@ -293,6 +297,12 @@ def save_data(data):
             return False
 
     return cache_local_data(data)
+
+
+def render_no_store_template(template_name, **context):
+    response = make_response(render_template(template_name, **context))
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    return response
 
 
 def prepare_data_for_view():
@@ -398,7 +408,7 @@ def compact_periods(periods):
 
 @app.route("/")
 def index():
-    return render_template(
+    return render_no_store_template(
         "index.html",
         data=prepare_data_for_view(),
         is_admin=False,
@@ -429,7 +439,7 @@ def admin():
         return redirect(url_for("login"))
     view_mode = request.args.get("mode", "edit")
     can_edit = view_mode != "view"
-    return render_template(
+    return render_no_store_template(
         "index.html",
         data=prepare_data_for_view(),
         is_admin=True,

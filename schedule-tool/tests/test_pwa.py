@@ -18,6 +18,7 @@ class PwaTests(unittest.TestCase):
         self.assertIn("/manifest.webmanifest", html)
         self.assertIn("serviceWorker.register", html)
         self.assertIn("/service-worker.js", html)
+        self.assertEqual(response.headers["Cache-Control"], "no-store, max-age=0")
 
     def test_manifest_is_installable(self):
         response = self.client.get("/manifest.webmanifest")

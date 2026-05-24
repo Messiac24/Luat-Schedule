@@ -28,6 +28,7 @@ SHEET_HEADERS = [
     "LỚP HỌC",
     "TRẠNG THÁI",
     "UPDATED_AT",
+    "LAST_SCRAPED",
 ]
 
 
@@ -80,6 +81,7 @@ def row_to_subject(index, row):
         "lop_hoc": classes,
         "trang_thai": padded[9] or "Chưa học",
         "updated_at": padded[10] or "",
+        "last_scraped": padded[11] or "",
     }
 
 
@@ -96,6 +98,7 @@ def subject_to_row(subject):
         ", ".join(normalize_class_list(subject.get("lop_hoc", []))),
         subject.get("trang_thai", "Chưa học"),
         subject.get("updated_at", ""),
+        subject.get("last_scraped", ""),
     ]
 
 
@@ -144,7 +147,7 @@ def sync_to_sheets(data=None):
         sheet.clear()
         sheet.update("A1", rows)
         sheet.format(
-            "A1:K1",
+            "A1:L1",
             {
                 "textFormat": {"bold": True},
                 "backgroundColor": {"red": 0.9, "green": 0.9, "blue": 0.9},
