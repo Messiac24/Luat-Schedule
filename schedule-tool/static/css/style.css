@@ -767,10 +767,17 @@ tr.subject-row.low-class-count .badge-class {
     .col-classes {
         display: flex;
         flex-wrap: wrap;
+        align-items: flex-start;
         gap: 6px;
+    }
+
+    .col-classes::before {
+        flex: 0 0 100%;
     }
     
     .col-classes .badge-class {
+        flex: 0 0 auto;
+        align-self: flex-start;
         margin: 0;
     }
 
@@ -1008,6 +1015,8 @@ tr.subject-row.low-class-count .badge-class {
     }
 
     .badge-class {
+        flex: 0 0 auto;
+        align-self: flex-start;
         margin-top: 4px;
     }
 
@@ -1275,6 +1284,7 @@ tr.subject-row.low-class-count .badge-class {
         order: 5;
         display: flex;
         flex-wrap: wrap;
+        align-items: flex-start;
         gap: 6px;
     }
 
