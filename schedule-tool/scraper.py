@@ -3,7 +3,7 @@ import json
 import sys
 import time
 import requests as req_lib
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 from sheets import load_from_sheets
@@ -28,6 +28,11 @@ TARGET_CLASSES_STR = os.getenv("TARGET_CLASSES", "")
 TARGET_CLASSES = [c.strip() for c in TARGET_CLASSES_STR.split(",") if c.strip()]
 
 DATA_FILE = "data.json"
+VIETNAM_TZ = timezone(timedelta(hours=7))
+
+
+def now_vietnam_iso():
+    return datetime.now(VIETNAM_TZ).isoformat()
 
 
 def normalize_class_name(value):
@@ -87,6 +92,7 @@ def merge_data(existing_data, new_subjects):
     """Merge new scraped data with existing data, preserving admin edits."""
     existing_map = {item["id"]: item for item in existing_data.get("subjects", [])}
     merged_subjects = []
+    now_iso = now_vietnam_iso()
 
     for new_subj in new_subjects:
         subj_id = new_subj["id"]
@@ -100,15 +106,15 @@ def merge_data(existing_data, new_subjects):
             existing_subj["lop_hoc"] = new_subj["lop_hoc"]
             existing_subj["last_scraped"] = new_subj["last_scraped"]
             existing_subj["updated_at"] = (
-                existing_subj.get("updated_at") or datetime.now().isoformat()
+                existing_subj.get("updated_at") or now_iso
             )
             # Preserve admin-managed fields: status, active time, and room edits.
             merged_subjects.append(existing_subj)
         else:
-            new_subj["updated_at"] = datetime.now().isoformat()
+            new_subj["updated_at"] = now_iso
             merged_subjects.append(new_subj)
 
-    return {"subjects": merged_subjects, "last_updated": datetime.now().isoformat()}
+    return {"subjects": merged_subjects, "last_updated": now_iso}
 
 
 def scrape_dlu():
@@ -120,7 +126,7 @@ def scrape_dlu():
         print("Vui lòng cấu hình TARGET_CLASSES trong .env")
         return False
 
-    print(f"Đang chạy scraper vào lúc {datetime.now().isoformat()}")
+    print(f"Đang chạy scraper vào lúc {now_vietnam_iso()}")
     print(f"Lớp cần lấy: {TARGET_CLASSES}")
 
     with sync_playwright() as p:
@@ -264,6 +270,7 @@ def scrape_dlu():
             # === BƯỚC 8: Transform thành format data.json ===
             import re
 
+            scrape_started_at = now_vietnam_iso()
             subjects_map = {}
             for item in all_raw_data:
                 raw_html = item.get("TKHHienThi", "")
@@ -345,7 +352,7 @@ def scrape_dlu():
                         "thoi_gian_goc": "",
                         "lop_hoc": lop_hoc,
                         "trang_thai": "Chưa học",
-                        "last_scraped": datetime.now().isoformat(),
+                        "last_scraped": scrape_started_at,
                         "_schedule_data": {},
                         "_seen_rooms": set(),
                     }

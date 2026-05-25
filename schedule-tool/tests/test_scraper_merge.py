@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import scraper
 
@@ -48,6 +49,33 @@ class ScraperMergeTests(unittest.TestCase):
         self.assertEqual(subject["thoi_gian"], "Admin makeup schedule")
         self.assertEqual(subject["phong_hoc"], "Admin edited room")
         self.assertEqual(subject["updated_at"], "2026-05-20T08:00:00")
+
+    def test_merge_uses_vietnam_timestamp_for_new_subjects(self):
+        scraped_subjects = [
+            {
+                "id": "LAW102",
+                "ma_hp": "LAW102",
+                "stt": 1,
+                "ten_hoc_phan": "New subject",
+                "tc": 2,
+                "giang_vien": "Teacher",
+                "phong_hoc": "",
+                "thoi_gian": "",
+                "thoi_gian_goc": "",
+                "lop_hoc": ["LH26B2DL"],
+                "last_scraped": "2026-05-25T05:44:06+07:00",
+            }
+        ]
+
+        with patch.object(
+            scraper, "now_vietnam_iso", return_value="2026-05-25T05:44:06+07:00"
+        ):
+            merged = scraper.merge_data({"subjects": []}, scraped_subjects)
+
+        self.assertEqual(merged["last_updated"], "2026-05-25T05:44:06+07:00")
+        self.assertEqual(
+            merged["subjects"][0]["updated_at"], "2026-05-25T05:44:06+07:00"
+        )
 
 
 if __name__ == "__main__":

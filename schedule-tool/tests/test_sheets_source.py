@@ -26,7 +26,7 @@ class SheetsSourceTests(unittest.TestCase):
                                 "ma_hp": "LAW101",
                                 "ten_hoc_phan": "Mon A",
                                 "lop_hoc": ["LH26B2DL"],
-                                "last_scraped": "2026-05-24T05:39:00",
+                                "last_scraped": "2026-05-25T05:39:00+07:00",
                             }
                         ]
                     }
@@ -38,7 +38,7 @@ class SheetsSourceTests(unittest.TestCase):
         sheet.update.assert_called_once()
         rows = sheet.update.call_args.args[1]
         self.assertIn("LAST_SCRAPED", rows[0])
-        self.assertEqual(rows[1][-1], "2026-05-24T05:39:00")
+        self.assertEqual(rows[1][-1], "2026-05-25T05:39:00+07:00")
 
     def test_scraper_prefers_google_sheets_existing_data_before_local_json(self):
         sheets_data = {
@@ -72,7 +72,7 @@ class SheetsSourceTests(unittest.TestCase):
                 "LH26B2DL",
                 "Chua hoc",
                 "2026-05-20T08:00:00",
-                "2026-05-24T05:39:00",
+                "2026-05-25T05:39:00+07:00",
             ],
             [
                 "2",
@@ -95,7 +95,7 @@ class SheetsSourceTests(unittest.TestCase):
         ), patch.object(app, "cache_local_data", return_value=True):
             data = app.load_data()
 
-        self.assertEqual(data["last_updated"], "2026-05-24T05:39:00")
+        self.assertEqual(data["last_updated"], "2026-05-25T05:39:00")
 
 
 if __name__ == "__main__":

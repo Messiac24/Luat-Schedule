@@ -3,7 +3,7 @@ import json
 import os
 import threading
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from dotenv import load_dotenv
 import gspread
@@ -25,6 +25,7 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD") or (
 ALLOWED_STATUSES = {"Chưa học", "Đã học", "Học bù"}
 MAX_TIME_LENGTH = 5000
 MAX_ROOM_LENGTH = 1000
+VIETNAM_TZ = timezone(timedelta(hours=7))
 
 SHEET_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -138,6 +139,10 @@ def normalize_class_list(values):
 
 def normalize_filter_text(value):
     return " ".join(str(value or "").strip().lower().split())
+
+
+def now_vietnam_iso():
+    return datetime.now(VIETNAM_TZ).isoformat()
 
 
 def validate_optional_text(value, max_length, field_name):
@@ -282,7 +287,7 @@ def load_data():
 
 
 def save_data(data):
-    data["last_updated"] = datetime.now().isoformat()
+    data["last_updated"] = now_vietnam_iso()
     if sheets_enabled():
         try:
             sheet = get_sheet()
@@ -319,7 +324,10 @@ def prepare_data_for_view():
 
 def parse_updated_at(value):
     try:
-        return datetime.fromisoformat(value)
+        parsed = datetime.fromisoformat(value)
+        if parsed.tzinfo:
+            return parsed.astimezone(VIETNAM_TZ).replace(tzinfo=None)
+        return parsed
     except Exception:
         return datetime.min
 
@@ -460,7 +468,7 @@ def export_excel():
         teacher_filter=request.args.get("teacher", ""),
     )
     workbook = BytesIO(build_export_xlsx(subjects))
-    today = datetime.now().strftime("%Y%m%d")
+    today = datetime.now(VIETNAM_TZ).strftime("%Y%m%d")
     return send_file(
         workbook,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -530,7 +538,7 @@ def update_subject():
                 subj["thoi_gian"] = new_time
             if new_room is not None:
                 subj["phong_hoc"] = new_room
-            subj["updated_at"] = datetime.now().isoformat()
+            subj["updated_at"] = now_vietnam_iso()
             found = True
             break
 
@@ -558,7 +566,7 @@ def reset_subject():
         if subj.get("id") == subj_id:
             subj["thoi_gian"] = subj.get("thoi_gian_goc", subj.get("thoi_gian", ""))
             subj["trang_thai"] = "Chưa học"
-            subj["updated_at"] = datetime.now().isoformat()
+            subj["updated_at"] = now_vietnam_iso()
             found = True
             reset_subject = subj
             break
