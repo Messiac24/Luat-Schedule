@@ -10,15 +10,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=11">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=12">
 </head>
 <body>
     <header class="app-header">
         <div class="container header-content">
-            <div class="brand-title">
-                <h1>Luật Schedule {% if is_admin %}<span>Admin</span>{% endif %}</h1>
-                <p>Chỉ mang tính chất tham khảo</p>
-            </div>
+            <h1>Luật Schedule {% if is_admin %}<span>Admin</span>{% endif %}</h1>
             <div class="actions">
                 <button id="btn-toggle-class-map" class="btn btn-secondary">
                     Chuyển mã lớp
@@ -57,7 +54,7 @@
     <main class="container">
         <div class="table-card">
             <div class="table-header">
-                <h2>Lịch Học Đồng Bộ</h2>
+                <h2>Lịch học tham khảo</h2>
                 <p>Cập nhật lần cuối: {% if data.last_updated %}{{ (data.last_updated|string)[:10].split('-')|reverse|join('/') }}{% else %}Chưa có dữ liệu{% endif %}</p>
             </div>
             <div id="filter-panel" class="filter-bar">

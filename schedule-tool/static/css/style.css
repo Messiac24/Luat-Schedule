@@ -76,12 +76,6 @@ body {
     align-items: center;
 }
 
-.brand-title {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
 h1 {
     font-family: var(--font-display);
     font-size: 28px;
@@ -92,12 +86,6 @@ h1 {
 
 h1 span {
     color: var(--color-primary);
-}
-
-.brand-title p {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-text-muted);
 }
 
 .actions {
