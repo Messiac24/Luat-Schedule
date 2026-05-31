@@ -750,7 +750,7 @@ tr.subject-row.low-class-count .badge-class {
     .col-classes,
     .col-time {
         padding-left: 0 !important;
-        padding-top: 32px !important;
+        padding-top: 8px !important;
         text-align: left;
     }
 
