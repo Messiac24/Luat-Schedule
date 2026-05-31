@@ -302,6 +302,10 @@ td {
     min-width: 200px;
 }
 
+.semester-chip {
+    display: none;
+}
+
 /* Row Hover & Interactive States */
 tr.subject-row {
     transition: all 0.3s ease;
@@ -1132,10 +1136,10 @@ tr.subject-row.low-class-count .badge-class {
     }
 
     .filter-bar {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: stretch;
-        gap: 8px;
+        gap: 8px 10px;
         margin-bottom: 12px;
         padding: 10px;
         border: 1px solid var(--color-border);
@@ -1160,6 +1164,7 @@ tr.subject-row.low-class-count .badge-class {
     }
 
     .filter-actions {
+        grid-column: 1 / -1;
         align-items: stretch;
     }
 
@@ -1197,9 +1202,9 @@ tr.subject-row.low-class-count .badge-class {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         column-gap: 12px;
-        row-gap: 8px;
+        row-gap: 6px;
         margin: 0;
-        padding: 14px;
+        padding: 12px;
         background: var(--color-surface);
         border: 1px solid var(--color-border);
         border-radius: 12px;
@@ -1239,6 +1244,7 @@ tr.subject-row.low-class-count .badge-class {
     }
 
     .col-stt,
+    .col-id,
     .col-tc {
         display: none;
     }
@@ -1253,6 +1259,10 @@ tr.subject-row.low-class-count .badge-class {
     td.col-name {
         grid-column: 1 / -1;
         order: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
         margin: 0;
         padding: 0 0 2px !important;
         font-size: 17px;
@@ -1264,6 +1274,24 @@ tr.subject-row.low-class-count .badge-class {
 
     td.col-name::before {
         display: none;
+    }
+
+    .subject-title {
+        min-width: 0;
+    }
+
+    .semester-chip {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        min-height: 22px;
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        background: #F3F4F6;
+        color: var(--color-text-secondary);
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
     }
 
     .col-room {
@@ -1301,15 +1329,8 @@ tr.subject-row.low-class-count .badge-class {
         padding-top: 4px !important;
     }
 
-    .col-id {
-        grid-column: 1 / -1;
-        order: 7;
-        color: var(--color-text-muted);
-        font-size: 12px;
-    }
-
     .schedule-list {
-        gap: 8px;
+        gap: 6px;
     }
 
     .schedule-entry {

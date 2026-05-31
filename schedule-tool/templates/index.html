@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=13">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=14">
 </head>
 <body>
     <header class="app-header">
@@ -106,7 +106,10 @@
                         <tr class="subject-row status-{{ subj.trang_thai|lower|replace(' ', '-') }}{% if subj.is_low_class_count %} low-class-count{% endif %}" data-id="{{ subj.id }}" data-class-list="{{ subj.lop_hoc|join(',') }}" data-semester="{{ subj.hoc_ky }}" data-subject="{{ subj.ten_hoc_phan }}" data-teacher="{{ subj.giang_vien }}" data-low-class-count="{{ 'true' if subj.is_low_class_count else 'false' }}">
                             <td class="col-stt" data-label="STT">{{ subj.stt }}</td>
                             <td class="col-id" data-label="MÃ HP">{{ subj.ma_hp }}</td>
-                            <td class="col-name" data-label="TÊN HỌC PHẦN">{{ subj.ten_hoc_phan }}</td>
+                            <td class="col-name" data-label="TÊN HỌC PHẦN">
+                                <span class="subject-title">{{ subj.ten_hoc_phan }}</span>
+                                <span class="semester-chip">{{ subj.hoc_ky }}</span>
+                            </td>
                             <td class="col-tc" data-label="TC">{{ subj.tc }}</td>
                             <td class="col-teacher" data-label="GIẢNG VIÊN">{{ subj.giang_vien }}</td>
                             <td class="col-room" data-label="PHÒNG">
