@@ -1284,11 +1284,13 @@ tr.subject-row.low-class-count .badge-class {
         display: flex;
         flex-wrap: wrap;
         align-items: flex-start;
-        gap: 6px;
+        gap: 4px 6px;
+        margin-top: -2px;
     }
 
     .col-classes::before {
         flex: 0 0 100%;
+        margin-bottom: 0 !important;
     }
 
     .col-status {
@@ -1330,7 +1332,7 @@ tr.subject-row.low-class-count .badge-class {
 
     .badge-class {
         margin: 0;
-        padding: 4px 9px;
+        padding: 3px 8px;
     }
 
     .status-badge,
