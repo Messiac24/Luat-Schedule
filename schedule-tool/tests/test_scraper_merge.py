@@ -49,6 +49,7 @@ class ScraperMergeTests(unittest.TestCase):
         self.assertEqual(subject["thoi_gian"], "Admin makeup schedule")
         self.assertEqual(subject["phong_hoc"], "Admin edited room")
         self.assertEqual(subject["updated_at"], "2026-05-20T08:00:00")
+        self.assertEqual(subject["hoc_ky"], "Học kỳ I")
 
     def test_merge_uses_vietnam_timestamp_for_new_subjects(self):
         scraped_subjects = [
@@ -76,6 +77,7 @@ class ScraperMergeTests(unittest.TestCase):
         self.assertEqual(
             merged["subjects"][0]["updated_at"], "2026-05-25T05:44:06+07:00"
         )
+        self.assertEqual(merged["subjects"][0]["hoc_ky"], "Học kỳ II")
 
 
 if __name__ == "__main__":

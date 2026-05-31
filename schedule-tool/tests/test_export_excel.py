@@ -13,18 +13,21 @@ class ExportExcelTests(unittest.TestCase):
                 "ten_hoc_phan": "Mon A",
                 "giang_vien": "GV A",
                 "lop_hoc": ["LH26B2DL", "LHK50DL"],
+                "hoc_ky": "Học kỳ I",
             },
             {
                 "ma_hp": "LAW102",
                 "ten_hoc_phan": "Mon B",
                 "giang_vien": "GV B",
                 "lop_hoc": ["LLT50DLTC"],
+                "hoc_ky": "Học kỳ II",
             },
         ]
 
         filtered = app.filter_export_subjects(
             subjects,
             class_filter="lh26b2dl",
+            semester_filter="học kỳ i",
             subject_filter="mon a",
             teacher_filter="gv a",
         )
@@ -69,19 +72,21 @@ class ExportExcelTests(unittest.TestCase):
                     "ten_hoc_phan": "Mon A",
                     "giang_vien": "GV A",
                     "lop_hoc": ["LH26B2DL"],
+                    "hoc_ky": "Học kỳ I",
                 },
                 {
                     "ma_hp": "LAW102",
                     "ten_hoc_phan": "Mon B",
                     "giang_vien": "GV B",
                     "lop_hoc": ["LLT50DLTC"],
+                    "hoc_ky": "Học kỳ II",
                 },
             ]
         }
 
         try:
             client = app.app.test_client()
-            response = client.get("/api/export.xlsx?class=lh26b2dl")
+            response = client.get("/api/export.xlsx?class=lh26b2dl&semester=học kỳ i")
         finally:
             app.prepare_data_for_view = original_prepare_data_for_view
 

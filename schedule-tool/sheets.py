@@ -10,6 +10,7 @@ load_dotenv()
 GOOGLE_SHEETS_ID = os.getenv("GOOGLE_SHEETS_ID")
 GOOGLE_SERVICE_ACCOUNT_JSON = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
 DATA_FILE = "data.json"
+DEFAULT_SEMESTER = "Học kỳ I"
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -29,6 +30,7 @@ SHEET_HEADERS = [
     "TRẠNG THÁI",
     "UPDATED_AT",
     "LAST_SCRAPED",
+    "HỌC KỲ",
 ]
 
 
@@ -82,6 +84,7 @@ def row_to_subject(index, row):
         "trang_thai": padded[9] or "Chưa học",
         "updated_at": padded[10] or "",
         "last_scraped": padded[11] or "",
+        "hoc_ky": padded[12] or DEFAULT_SEMESTER,
     }
 
 
@@ -99,6 +102,7 @@ def subject_to_row(subject):
         subject.get("trang_thai", "Chưa học"),
         subject.get("updated_at", ""),
         subject.get("last_scraped", ""),
+        subject.get("hoc_ky", DEFAULT_SEMESTER),
     ]
 
 
@@ -147,7 +151,7 @@ def sync_to_sheets(data=None):
         sheet.clear()
         sheet.update("A1", rows)
         sheet.format(
-            "A1:L1",
+            "A1:M1",
             {
                 "textFormat": {"bold": True},
                 "backgroundColor": {"red": 0.9, "green": 0.9, "blue": 0.9},

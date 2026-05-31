@@ -29,6 +29,8 @@ TARGET_CLASSES = [c.strip() for c in TARGET_CLASSES_STR.split(",") if c.strip()]
 
 DATA_FILE = "data.json"
 VIETNAM_TZ = timezone(timedelta(hours=7))
+DEFAULT_SEMESTER = "Học kỳ I"
+NEW_SUBJECT_SEMESTER = "Học kỳ II"
 
 
 def now_vietnam_iso():
@@ -105,6 +107,7 @@ def merge_data(existing_data, new_subjects):
             existing_subj["thoi_gian_goc"] = new_subj["thoi_gian_goc"]
             existing_subj["lop_hoc"] = new_subj["lop_hoc"]
             existing_subj["last_scraped"] = new_subj["last_scraped"]
+            existing_subj["hoc_ky"] = existing_subj.get("hoc_ky") or DEFAULT_SEMESTER
             existing_subj["updated_at"] = (
                 existing_subj.get("updated_at") or now_iso
             )
@@ -112,6 +115,7 @@ def merge_data(existing_data, new_subjects):
             merged_subjects.append(existing_subj)
         else:
             new_subj["updated_at"] = now_iso
+            new_subj["hoc_ky"] = new_subj.get("hoc_ky") or NEW_SUBJECT_SEMESTER
             merged_subjects.append(new_subj)
 
     return {"subjects": merged_subjects, "last_updated": now_iso}

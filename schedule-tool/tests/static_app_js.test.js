@@ -32,6 +32,7 @@ assert.equal(sandbox.formatClassFilterLabel('UNKNOWN'), 'UNKNOWN');
 sandbox.document.getElementById = (id) => {
   const values = {
     'filter-class': 'lh26b2dl',
+    'filter-semester': 'học kỳ i',
     'filter-subject': '',
     'filter-teacher': 'gv% a',
   };
@@ -40,5 +41,5 @@ sandbox.document.getElementById = (id) => {
 
 assert.equal(
   sandbox.buildExportUrl(),
-  '/api/export.xlsx?class=lh26b2dl&teacher=gv%25+a',
+  '/api/export.xlsx?class=lh26b2dl&semester=h%E1%BB%8Dc+k%E1%BB%B3+i&teacher=gv%25+a',
 );

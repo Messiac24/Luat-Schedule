@@ -144,12 +144,16 @@ function normalizeFilterText(value) {
     return String(value || '').trim().toLowerCase();
 }
 
-function rowMatchesFilters(row, classFilter, subjectFilter, teacherFilter) {
+function rowMatchesFilters(row, classFilter, semesterFilter, subjectFilter, teacherFilter) {
     const rowClasses = normalizeFilterText(row.dataset.classList);
+    const rowSemester = normalizeFilterText(row.dataset.semester);
     const rowSubject = normalizeFilterText(row.dataset.subject);
     const rowTeacher = normalizeFilterText(row.dataset.teacher);
 
     if (classFilter && !rowClasses.split(',').map((cls) => cls.trim()).includes(classFilter)) {
+        return false;
+    }
+    if (semesterFilter && rowSemester !== semesterFilter) {
         return false;
     }
     if (subjectFilter && rowSubject !== subjectFilter) {
@@ -186,21 +190,24 @@ function initSelectOptions(attribute, elementId, defaultText) {
 
 function applyFilters() {
     const classFilter = normalizeFilterText(document.getElementById('filter-class')?.value);
+    const semesterFilter = normalizeFilterText(document.getElementById('filter-semester')?.value);
     const subjectFilter = normalizeFilterText(document.getElementById('filter-subject')?.value);
     const teacherFilter = normalizeFilterText(document.getElementById('filter-teacher')?.value);
 
     document.querySelectorAll('tbody tr[data-id]').forEach((row) => {
-        row.style.display = rowMatchesFilters(row, classFilter, subjectFilter, teacherFilter) ? '' : 'none';
+        row.style.display = rowMatchesFilters(row, classFilter, semesterFilter, subjectFilter, teacherFilter) ? '' : 'none';
     });
 }
 
 function buildExportUrl() {
     const params = new URLSearchParams();
     const classFilter = document.getElementById('filter-class')?.value || '';
+    const semesterFilter = document.getElementById('filter-semester')?.value || '';
     const subjectFilter = document.getElementById('filter-subject')?.value || '';
     const teacherFilter = document.getElementById('filter-teacher')?.value || '';
 
     if (classFilter) params.set('class', classFilter);
+    if (semesterFilter) params.set('semester', semesterFilter);
     if (subjectFilter) params.set('subject', subjectFilter);
     if (teacherFilter) params.set('teacher', teacherFilter);
 
@@ -358,10 +365,12 @@ const clearFiltersButton = document.getElementById('btn-clear-filters');
 if (clearFiltersButton) {
     clearFiltersButton.addEventListener('click', () => {
         const classFilter = document.getElementById('filter-class');
+        const semesterFilter = document.getElementById('filter-semester');
         const subjectFilter = document.getElementById('filter-subject');
         const teacherFilter = document.getElementById('filter-teacher');
 
         if (classFilter) classFilter.value = '';
+        if (semesterFilter) semesterFilter.value = '';
         if (subjectFilter) subjectFilter.value = '';
         if (teacherFilter) teacherFilter.value = '';
         applyFilters();
@@ -369,10 +378,12 @@ if (clearFiltersButton) {
 }
 
 const filterClass = document.getElementById('filter-class');
+const filterSemester = document.getElementById('filter-semester');
 const filterSubject = document.getElementById('filter-subject');
 const filterTeacher = document.getElementById('filter-teacher');
 
 if (filterClass) filterClass.addEventListener('change', applyFilters);
+if (filterSemester) filterSemester.addEventListener('change', applyFilters);
 if (filterSubject) filterSubject.addEventListener('change', applyFilters);
 if (filterTeacher) filterTeacher.addEventListener('change', applyFilters);
 
@@ -388,6 +399,7 @@ if (exportExcelButton) {
 
 bindBadgeOriginalText();
 initClassFilterOptions();
+initSelectOptions('semester', 'filter-semester');
 initSelectOptions('subject', 'filter-subject');
 initSelectOptions('teacher', 'filter-teacher');
 applyFilters();

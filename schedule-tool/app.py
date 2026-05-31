@@ -26,6 +26,7 @@ ALLOWED_STATUSES = {"Chưa học", "Đã học", "Học bù"}
 MAX_TIME_LENGTH = 5000
 MAX_ROOM_LENGTH = 1000
 VIETNAM_TZ = timezone(timedelta(hours=7))
+DEFAULT_SEMESTER = "Học kỳ I"
 
 SHEET_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -45,6 +46,7 @@ SHEET_HEADERS = [
     "TRẠNG THÁI",
     "UPDATED_AT",
     "LAST_SCRAPED",
+    "HỌC KỲ",
 ]
 
 EXPORT_HEADERS = [
@@ -104,6 +106,7 @@ def row_to_subject(index, row):
         "trang_thai": padded[9] or "Chưa học",
         "updated_at": padded[10] or "",
         "last_scraped": padded[11] or "",
+        "hoc_ky": padded[12] or DEFAULT_SEMESTER,
     }
 
 
@@ -121,6 +124,7 @@ def subject_to_row(subject):
         subject.get("trang_thai", "Chưa học"),
         subject.get("updated_at", ""),
         subject.get("last_scraped", ""),
+        subject.get("hoc_ky", DEFAULT_SEMESTER),
     ]
 
 
@@ -158,10 +162,12 @@ def validate_optional_text(value, max_length, field_name):
 def filter_export_subjects(
     subjects,
     class_filter="",
+    semester_filter="",
     subject_filter="",
     teacher_filter="",
 ):
     class_filter = normalize_filter_text(class_filter)
+    semester_filter = normalize_filter_text(semester_filter)
     subject_filter = normalize_filter_text(subject_filter)
     teacher_filter = normalize_filter_text(teacher_filter)
     filtered = []
@@ -171,10 +177,13 @@ def filter_export_subjects(
             normalize_filter_text(class_name)
             for class_name in normalize_class_list(subject.get("lop_hoc", []))
         ]
+        semester = normalize_filter_text(subject.get("hoc_ky", DEFAULT_SEMESTER))
         subject_name = normalize_filter_text(subject.get("ten_hoc_phan", ""))
         teacher = normalize_filter_text(subject.get("giang_vien", ""))
 
         if class_filter and class_filter not in classes:
+            continue
+        if semester_filter and semester_filter != semester:
             continue
         if subject_filter and subject_filter != subject_name:
             continue
@@ -315,6 +324,7 @@ def prepare_data_for_view():
     subjects = data.get("subjects", [])
     for original_index, subject in enumerate(subjects):
         subject["lop_hoc"] = normalize_class_list(subject.get("lop_hoc", []))
+        subject["hoc_ky"] = subject.get("hoc_ky") or DEFAULT_SEMESTER
         subject["_view_index"] = original_index
         subject["schedule_entries"] = parse_schedule_time(subject.get("thoi_gian", ""))
         subject["is_low_class_count"] = len(subject.get("lop_hoc", [])) <= 2
@@ -464,6 +474,7 @@ def export_excel():
     subjects = filter_export_subjects(
         data.get("subjects", []),
         class_filter=request.args.get("class", ""),
+        semester_filter=request.args.get("semester", ""),
         subject_filter=request.args.get("subject", ""),
         teacher_filter=request.args.get("teacher", ""),
     )
