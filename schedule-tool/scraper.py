@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import sys
 import time
 import requests as req_lib
@@ -63,6 +64,43 @@ def is_weekend_daytime_entry(item):
 
 def filter_weekend_daytime_entries(entries):
     return [item for item in entries if is_weekend_daytime_entry(item)]
+
+
+def extract_schedule_dates(value):
+    dates = []
+    for day, month, year in re.findall(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b", str(value or "")):
+        try:
+            dates.append(datetime(int(year), int(month), int(day)).date())
+        except ValueError:
+            continue
+    return dates
+
+
+def should_auto_mark_completed(subject, today=None):
+    if subject.get("trang_thai") != "Chưa học":
+        return False
+
+    schedule_text = subject.get("thoi_gian_goc") or subject.get("thoi_gian", "")
+    schedule_dates = extract_schedule_dates(schedule_text)
+    if not schedule_dates:
+        return False
+
+    today = today or datetime.now(VIETNAM_TZ).date()
+    return max(schedule_dates) < today
+
+
+def auto_mark_completed_subjects(data, today=None, now_iso=None):
+    today = today or datetime.now(VIETNAM_TZ).date()
+    now_iso = now_iso or now_vietnam_iso()
+    completed_count = 0
+
+    for subject in data.get("subjects", []):
+        if should_auto_mark_completed(subject, today=today):
+            subject["trang_thai"] = "Đã học"
+            subject["updated_at"] = now_iso
+            completed_count += 1
+
+    return completed_count
 
 
 def load_local_data():
@@ -416,6 +454,11 @@ def scrape_dlu():
             # Merge và lưu
             existing_data = load_existing_data()
             merged_data = merge_data(existing_data, subjects_list)
+            completed_count = auto_mark_completed_subjects(merged_data)
+            if completed_count:
+                print(
+                    f"Đã tự động chuyển {completed_count} môn sang trạng thái Đã học."
+                )
             save_local_data(merged_data)
 
             print(f"Đã lưu {len(subjects_list)} môn học vào data.json")

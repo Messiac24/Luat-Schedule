@@ -1,4 +1,5 @@
 import unittest
+from datetime import date
 from unittest.mock import patch
 
 import scraper
@@ -78,6 +79,73 @@ class ScraperMergeTests(unittest.TestCase):
             merged["subjects"][0]["updated_at"], "2026-05-25T05:44:06+07:00"
         )
         self.assertEqual(merged["subjects"][0]["hoc_ky"], "Học kỳ II")
+
+    def test_auto_marks_unmodified_subject_completed_after_last_schedule_date(self):
+        data = {
+            "subjects": [
+                {
+                    "id": "LAW101",
+                    "trang_thai": "Chưa học",
+                    "thoi_gian_goc": (
+                        "30/05/2026 (Thứ Bảy) - Sáng\n"
+                        "31/05/2026 (Chủ Nhật) - Chiều"
+                    ),
+                    "updated_at": "2026-05-20T08:00:00+07:00",
+                }
+            ]
+        }
+
+        completed_count = scraper.auto_mark_completed_subjects(
+            data,
+            today=date(2026, 6, 1),
+            now_iso="2026-06-01T05:00:00+07:00",
+        )
+
+        self.assertEqual(completed_count, 1)
+        self.assertEqual(data["subjects"][0]["trang_thai"], "Đã học")
+        self.assertEqual(
+            data["subjects"][0]["updated_at"], "2026-06-01T05:00:00+07:00"
+        )
+
+    def test_auto_mark_does_not_complete_subject_on_same_day(self):
+        data = {
+            "subjects": [
+                {
+                    "id": "LAW101",
+                    "trang_thai": "Chưa học",
+                    "thoi_gian_goc": "31/05/2026 (Chủ Nhật) - Sáng",
+                }
+            ]
+        }
+
+        completed_count = scraper.auto_mark_completed_subjects(
+            data,
+            today=date(2026, 5, 31),
+            now_iso="2026-05-31T05:00:00+07:00",
+        )
+
+        self.assertEqual(completed_count, 0)
+        self.assertEqual(data["subjects"][0]["trang_thai"], "Chưa học")
+
+    def test_auto_mark_does_not_override_admin_makeup_status(self):
+        data = {
+            "subjects": [
+                {
+                    "id": "LAW101",
+                    "trang_thai": "Học bù",
+                    "thoi_gian_goc": "30/05/2026 (Thứ Bảy) - Sáng",
+                }
+            ]
+        }
+
+        completed_count = scraper.auto_mark_completed_subjects(
+            data,
+            today=date(2026, 6, 1),
+            now_iso="2026-06-01T05:00:00+07:00",
+        )
+
+        self.assertEqual(completed_count, 0)
+        self.assertEqual(data["subjects"][0]["trang_thai"], "Học bù")
 
 
 if __name__ == "__main__":
