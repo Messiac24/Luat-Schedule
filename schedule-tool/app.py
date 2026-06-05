@@ -327,6 +327,9 @@ def prepare_data_for_view():
         subject["hoc_ky"] = subject.get("hoc_ky") or DEFAULT_SEMESTER
         subject["_view_index"] = original_index
         subject["schedule_entries"] = parse_schedule_time(subject.get("thoi_gian", ""))
+        subject["schedule_sort_value"] = schedule_sort_value(
+            subject.get("thoi_gian", "")
+        )
         subject["is_low_class_count"] = len(subject.get("lop_hoc", [])) <= 2
     data["subjects"] = sorted(subjects, key=subject_view_sort_key)
     return data
@@ -350,7 +353,11 @@ def subject_view_sort_key(subject):
         "đã học": 2,
     }
     if status == "chưa học":
-        return (0, subject.get("_view_index", 0))
+        return (
+            0,
+            parse_schedule_sort_value(subject.get("schedule_sort_value", "")),
+            subject.get("_view_index", 0),
+        )
     return (
         status_priority.get(status, 1),
         parse_updated_at(subject.get("updated_at", "")),
@@ -399,6 +406,23 @@ def parse_schedule_time(value):
         entry["periods"] = compact_periods(entry["periods"])
 
     return entries
+
+
+def schedule_sort_value(value):
+    for entry in parse_schedule_time(value):
+        date_text = entry.get("date", "").split("(", 1)[0].strip()
+        try:
+            return datetime.strptime(date_text, "%d/%m/%Y").strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    return ""
+
+
+def parse_schedule_sort_value(value):
+    try:
+        return datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        return datetime.max
 
 
 def clean_period_label(period):
@@ -593,6 +617,7 @@ def reset_subject():
                     "thoi_gian": reset_subject.get("thoi_gian"),
                     "trang_thai": reset_subject.get("trang_thai"),
                     "phong_hoc": reset_subject.get("phong_hoc", ""),
+                    "updated_at": reset_subject.get("updated_at", ""),
                 },
             }
         )

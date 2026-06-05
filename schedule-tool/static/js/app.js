@@ -101,22 +101,56 @@ function getRowStatus(row) {
 }
 
 function getStatusPriority(status) {
-    const normalized = status.trim();
+    const normalized = status.trim().toLowerCase();
     if (normalized === 'Chưa học') return 0;
-    if (normalized === 'Học bù') return 1;
-    if (normalized === 'Đã học') return 2;
+    if (normalized === 'chưa học') return 0;
+    if (normalized === 'học bù') return 1;
+    if (normalized === 'đã học') return 2;
     return 1;
 }
 
-function findInsertBeforeRow(tbody, status) {
-    const targetPriority = getStatusPriority(status);
-    for (const row of tbody.querySelectorAll('tr[data-id]')) {
-        const rowStatus = getRowStatus(row);
-        if (getStatusPriority(rowStatus) > targetPriority) {
-            return row;
-        }
+function scheduleSortValueFromText(value) {
+    const match = String(value || '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (!match) return '';
+    const [, day, month, year] = match;
+    return `${year}-${month}-${day}`;
+}
+
+function getRowSortKey(row) {
+    const statusSelect = row.querySelector('.status-select');
+    const status = statusSelect ? statusSelect.value : getRowStatus(row);
+    const priority = getStatusPriority(status);
+    const timeEditor = row.querySelector('.time-editor');
+    const scheduleSort = timeEditor
+        ? scheduleSortValueFromText(timeEditor.value)
+        : (row.dataset.scheduleSort || '');
+
+    return {
+        priority,
+        scheduleSort: scheduleSort || '9999-12-31',
+        updatedAt: row.dataset.updatedAt || '',
+        viewIndex: Number(row.dataset.viewIndex || 0),
+    };
+}
+
+function compareRowsBySchedule(a, b) {
+    const left = getRowSortKey(a);
+    const right = getRowSortKey(b);
+
+    if (left.priority !== right.priority) return left.priority - right.priority;
+    if (left.priority === 0 && left.scheduleSort !== right.scheduleSort) {
+        return left.scheduleSort.localeCompare(right.scheduleSort);
     }
-    return null;
+    if (left.priority !== 0 && left.updatedAt !== right.updatedAt) {
+        return left.updatedAt.localeCompare(right.updatedAt);
+    }
+    return left.viewIndex - right.viewIndex;
+}
+
+function reorderRows(tbody) {
+    Array.from(tbody.querySelectorAll('tr[data-id]'))
+        .sort(compareRowsBySchedule)
+        .forEach((row) => tbody.appendChild(row));
 }
 
 function reorderRowByStatus(id, status) {
@@ -132,12 +166,10 @@ function reorderRowByStatus(id, status) {
         return;
     }
 
-    const insertBefore = findInsertBeforeRow(tbody, status);
-    if (insertBefore) {
-        tbody.insertBefore(row, insertBefore);
-    } else {
-        tbody.appendChild(row);
-    }
+    row.dataset.scheduleSort = scheduleSortValueFromText(
+        row.querySelector('.time-editor')?.value || row.dataset.scheduleSort
+    );
+    reorderRows(tbody);
 }
 
 function normalizeFilterText(value) {
@@ -262,6 +294,7 @@ function saveRow(id, successMessage = 'Đã lưu cập nhật') {
         .then((data) => {
             if (data.success) {
                 if (row && payload.trang_thai) {
+                    row.dataset.updatedAt = data.subject?.updated_at || row.dataset.updatedAt || '';
                     updateRowStatusClass(id, payload.trang_thai);
                     reorderRowByStatus(id, payload.trang_thai);
                 }
@@ -311,6 +344,8 @@ function resetRow(id) {
                     room.value = data.subject.phong_hoc;
                 }
 
+                row.dataset.updatedAt = data.subject.updated_at || row.dataset.updatedAt || '';
+                row.dataset.scheduleSort = scheduleSortValueFromText(data.subject.thoi_gian);
                 updateRowStatusClass(id, data.subject.trang_thai);
                 reorderRowByStatus(id, data.subject.trang_thai);
                 showToast('Đã reset lịch gốc');

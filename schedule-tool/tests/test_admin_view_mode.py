@@ -125,6 +125,82 @@ class AdminViewModeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertFalse(response.get_json()["success"])
 
+    def test_prepare_view_sorts_unstarted_subjects_by_first_schedule_date(self):
+        original_load_data = app.load_data
+        app.load_data = lambda: {
+            "subjects": [
+                {
+                    "id": "20LH1204",
+                    "ma_hp": "20LH1204",
+                    "thoi_gian": "13/06/2026 (Thứ Bảy) - Sáng",
+                    "lop_hoc": ["LHK50DL"],
+                    "trang_thai": "Chưa học",
+                },
+                {
+                    "id": "LC101X",
+                    "ma_hp": "LC101X",
+                    "thoi_gian": "06/06/2026 (Thứ Bảy) - Sáng",
+                    "lop_hoc": ["LHK50DL"],
+                    "trang_thai": "Chưa học",
+                },
+                {
+                    "id": "20LH1105D",
+                    "ma_hp": "20LH1105D",
+                    "thoi_gian": "27/06/2026 (Thứ Bảy) - Sáng",
+                    "lop_hoc": ["LHK50DL"],
+                    "trang_thai": "Chưa học",
+                },
+                {
+                    "id": "20LH1103",
+                    "ma_hp": "20LH1103",
+                    "thoi_gian": "04/07/2026 (Thứ Bảy) - Sáng",
+                    "lop_hoc": ["LHK50DL"],
+                    "trang_thai": "Chưa học",
+                },
+                {
+                    "id": "21LH1105CĐ",
+                    "ma_hp": "21LH1105CĐ",
+                    "thoi_gian": "06/06/2026 (Thứ Bảy) - Sáng",
+                    "lop_hoc": ["LLT50DLCĐ"],
+                    "trang_thai": "Chưa học",
+                },
+                {
+                    "id": "LH1104CĐ",
+                    "ma_hp": "LH1104CĐ",
+                    "thoi_gian": "20/06/2026 (Thứ Bảy) - Sáng",
+                    "lop_hoc": ["LLT50DLCĐ"],
+                    "trang_thai": "Chưa học",
+                },
+                {
+                    "id": "MAKEUP",
+                    "ma_hp": "MAKEUP",
+                    "thoi_gian": "01/06/2026 (Thứ Hai) - Sáng",
+                    "lop_hoc": ["LHK50DL"],
+                    "trang_thai": "Học bù",
+                    "updated_at": "2026-05-20T08:00:00+07:00",
+                },
+            ],
+            "last_updated": "",
+        }
+
+        try:
+            data = self.original_prepare_data_for_view()
+        finally:
+            app.load_data = original_load_data
+
+        self.assertEqual(
+            [subject["id"] for subject in data["subjects"]],
+            [
+                "LC101X",
+                "21LH1105CĐ",
+                "20LH1204",
+                "LH1104CĐ",
+                "20LH1105D",
+                "20LH1103",
+                "MAKEUP",
+            ],
+        )
+
     def test_empty_state_points_to_github_actions_scrape(self):
         app.prepare_data_for_view = lambda: {"subjects": [], "last_updated": ""}
 

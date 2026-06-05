@@ -103,7 +103,7 @@
                     </thead>
                     <tbody>
                         {% for subj in data.subjects %}
-                        <tr class="subject-row status-{{ subj.trang_thai|lower|replace(' ', '-') }}{% if subj.is_low_class_count %} low-class-count{% endif %}" data-id="{{ subj.id }}" data-class-list="{{ subj.lop_hoc|join(',') }}" data-semester="{{ subj.hoc_ky }}" data-subject="{{ subj.ten_hoc_phan }}" data-teacher="{{ subj.giang_vien }}" data-low-class-count="{{ 'true' if subj.is_low_class_count else 'false' }}">
+                        <tr class="subject-row status-{{ subj.trang_thai|lower|replace(' ', '-') }}{% if subj.is_low_class_count %} low-class-count{% endif %}" data-id="{{ subj.id }}" data-class-list="{{ subj.lop_hoc|join(',') }}" data-semester="{{ subj.hoc_ky }}" data-subject="{{ subj.ten_hoc_phan }}" data-teacher="{{ subj.giang_vien }}" data-low-class-count="{{ 'true' if subj.is_low_class_count else 'false' }}" data-view-index="{{ subj._view_index }}" data-schedule-sort="{{ subj.schedule_sort_value }}" data-updated-at="{{ subj.updated_at }}">
                             <td class="col-stt" data-label="STT">{{ subj.stt }}</td>
                             <td class="col-id" data-label="MÃ HP">{{ subj.ma_hp }}</td>
                             <td class="col-name" data-label="TÊN HỌC PHẦN">

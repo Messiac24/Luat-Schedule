@@ -28,6 +28,35 @@ assert.equal(sandbox.formatClassFilterLabel('LHK50DL'), 'LHK50DL (VLVH)');
 assert.equal(sandbox.formatClassFilterLabel('LLT50DLCĐ'), 'LLT50DLCĐ (CĐ)');
 assert.equal(sandbox.formatClassFilterLabel('LLT50DLTC'), 'LLT50DLTC (TC)');
 assert.equal(sandbox.formatClassFilterLabel('UNKNOWN'), 'UNKNOWN');
+assert.equal(sandbox.getStatusPriority('chưa học'), 0);
+assert.equal(sandbox.getStatusPriority('Học bù'), 1);
+assert.equal(sandbox.scheduleSortValueFromText('06/06/2026 (Thứ Bảy) - Sáng'), '2026-06-06');
+assert.equal(sandbox.scheduleSortValueFromText('Không có lịch'), '');
+
+const rows = [
+  {
+    dataset: { viewIndex: '5', updatedAt: '', scheduleSort: '2026-06-13' },
+    querySelector: (selector) => {
+      if (selector === '.status-select') return { value: 'Chưa học' };
+      if (selector === '.time-editor') return { value: '13/06/2026 (Thứ Bảy) - Sáng' };
+      return null;
+    },
+  },
+  {
+    dataset: { viewIndex: '6', updatedAt: '', scheduleSort: '2026-06-06' },
+    querySelector: (selector) => {
+      if (selector === '.status-select') return { value: 'Chưa học' };
+      if (selector === '.time-editor') return { value: '06/06/2026 (Thứ Bảy) - Sáng' };
+      return null;
+    },
+  },
+  {
+    dataset: { viewIndex: '4', updatedAt: '2026-05-20T08:00:00+07:00', scheduleSort: '2026-06-01' },
+    querySelector: (selector) => (selector === '.status-select' ? { value: 'Học bù' } : null),
+  },
+];
+
+assert.deepEqual(rows.sort(sandbox.compareRowsBySchedule).map((row) => row.dataset.viewIndex), ['6', '5', '4']);
 
 sandbox.document.getElementById = (id) => {
   const values = {
