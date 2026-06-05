@@ -127,6 +127,19 @@ class AdminViewModeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertFalse(response.get_json()["success"])
 
+    def test_sync_uses_current_loaded_data_instead_of_local_fallback(self):
+        self.login()
+        current_data = {"subjects": [dict(SAMPLE_DATA["subjects"][0])]}
+
+        with patch.object(app, "sheets_enabled", return_value=True), patch.object(
+            app, "load_data", return_value=current_data
+        ), patch.object(app, "sync_to_sheets", return_value=True) as sync_to_sheets:
+            response = self.client.post("/api/sync")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["success"])
+        sync_to_sheets.assert_called_once_with(current_data)
+
     def test_prepare_view_sorts_unstarted_subjects_by_first_schedule_date(self):
         original_load_data = app.load_data
         app.load_data = lambda: {

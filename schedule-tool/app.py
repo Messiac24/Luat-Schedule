@@ -666,7 +666,7 @@ def run_sync():
             400,
         )
 
-    success = sync_to_sheets()
+    success = sync_to_sheets(load_data())
     if success:
         return jsonify(
             {"success": True, "message": "Đã đồng bộ lên Google Sheets thành công."}
