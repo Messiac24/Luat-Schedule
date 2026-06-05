@@ -14,10 +14,12 @@ const sandbox = {
   URLSearchParams,
   window: { location: { href: '' } },
   document: {
+    body: { classList: { toggle() {}, contains: () => false } },
     querySelectorAll: () => [],
     querySelector: () => null,
     getElementById: () => null,
     createElement: () => ({ appendChild() {} }),
+    addEventListener() {},
   },
 };
 

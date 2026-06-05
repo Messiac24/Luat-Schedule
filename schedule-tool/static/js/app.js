@@ -360,6 +360,42 @@ function updateStatus(id, newStatus) {
     saveRow(id, 'Đã cập nhật trạng thái');
 }
 
+function setMobileMenuOpen(isOpen) {
+    document.body.classList.toggle('mobile-menu-open', isOpen);
+    const menuButton = document.getElementById('btn-mobile-menu');
+    if (menuButton) {
+        menuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        menuButton.setAttribute('aria-label', isOpen ? 'Đóng menu' : 'Mở menu');
+    }
+}
+
+const mobileMenuButton = document.getElementById('btn-mobile-menu');
+const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+
+if (mobileMenuButton) {
+    mobileMenuButton.addEventListener('click', () => {
+        setMobileMenuOpen(!document.body.classList.contains('mobile-menu-open'));
+    });
+}
+
+if (mobileMenuBackdrop) {
+    mobileMenuBackdrop.addEventListener('click', () => setMobileMenuOpen(false));
+}
+
+document.querySelectorAll('#header-actions .btn, #header-actions a').forEach((element) => {
+    element.addEventListener('click', () => {
+        if (window.matchMedia('(max-width: 767px)').matches) {
+            setMobileMenuOpen(false);
+        }
+    });
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        setMobileMenuOpen(false);
+    }
+});
+
 document.querySelectorAll('.btn-save-row').forEach(button => {
     button.addEventListener('click', () => {
         saveRow(button.dataset.id);

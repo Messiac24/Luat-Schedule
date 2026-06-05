@@ -98,6 +98,12 @@ h1 span {
     margin: 0;
 }
 
+.mobile-menu-toggle,
+.mobile-menu-greeting,
+.mobile-menu-backdrop {
+    display: none;
+}
+
 .is-hidden {
     display: none !important;
 }
@@ -1079,8 +1085,8 @@ tr.subject-row.low-class-count .badge-class {
     }
 
     .header-content {
-        align-items: stretch;
-        flex-direction: column;
+        align-items: center;
+        flex-direction: row;
         gap: 12px;
     }
 
@@ -1089,20 +1095,116 @@ tr.subject-row.low-class-count .badge-class {
         line-height: 1.2;
     }
 
+    .mobile-menu-toggle {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        margin-left: auto;
+        position: relative;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-full);
+        background: var(--color-surface);
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+    }
+
+    .mobile-menu-toggle span {
+        position: absolute;
+        width: 18px;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--color-text-primary);
+        transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .mobile-menu-toggle span:nth-child(1) {
+        transform: translateY(-6px);
+    }
+
+    .mobile-menu-toggle span:nth-child(3) {
+        transform: translateY(6px);
+    }
+
+    body.mobile-menu-open .mobile-menu-toggle span:nth-child(1) {
+        transform: rotate(45deg);
+    }
+
+    body.mobile-menu-open .mobile-menu-toggle span:nth-child(2) {
+        opacity: 0;
+    }
+
+    body.mobile-menu-open .mobile-menu-toggle span:nth-child(3) {
+        transform: rotate(-45deg);
+    }
+
+    .mobile-menu-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 55;
+        background: rgba(17, 24, 39, 0.22);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    body.mobile-menu-open .mobile-menu-backdrop {
+        display: block;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .mobile-menu-greeting {
+        display: block;
+        color: var(--color-text-primary);
+        font-family: var(--font-display);
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.25;
+        padding: 4px 2px 6px;
+    }
+
     .actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-        gap: 8px;
+        position: fixed;
+        top: calc(58px + env(safe-area-inset-top));
+        right: 10px;
+        z-index: 60;
+        display: flex;
+        flex-direction: column;
+        width: min(260px, calc(100vw - 20px));
+        max-width: calc(100vw - 24px);
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid rgba(229, 231, 235, 0.9);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+        transform: translateX(calc(100% + 16px));
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.22s ease, opacity 0.22s ease;
+    }
+
+    body.mobile-menu-open .actions {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
     }
 
     .actions .btn,
     .actions form,
     .actions form .btn {
         width: 100%;
-        min-height: 42px;
+        min-height: 40px;
         padding: 9px 12px;
         font-size: 12px;
+    }
+
+    .actions .btn {
+        white-space: normal;
+        line-height: 1.2;
     }
 
     main {

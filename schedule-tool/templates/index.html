@@ -10,13 +10,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=14">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=15">
 </head>
 <body>
     <header class="app-header">
         <div class="container header-content">
             <h1>Luật Schedule {% if is_admin %}<span>Admin</span>{% endif %}</h1>
-            <div class="actions">
+            <button id="btn-mobile-menu" class="mobile-menu-toggle" type="button" aria-label="Mở menu" aria-controls="header-actions" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div id="header-actions" class="actions">
+                {% if is_admin %}
+                <div class="mobile-menu-greeting">Xin chào Ngọc Giao</div>
+                {% endif %}
                 <button id="btn-toggle-class-map" class="btn btn-secondary">
                     Chuyển mã lớp
                 </button>
@@ -50,6 +58,7 @@
             </div>
         </div>
     </header>
+    <div id="mobile-menu-backdrop" class="mobile-menu-backdrop"></div>
 
     <main class="container">
         <div class="table-card">
@@ -177,7 +186,7 @@
 
     <div id="toast" class="toast"></div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}?v=7"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=8"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
