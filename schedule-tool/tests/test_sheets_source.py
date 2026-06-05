@@ -109,6 +109,14 @@ class SheetsSourceTests(unittest.TestCase):
         self.assertFalse(is_valid)
         self.assertTrue("thiếu môn" in message or "ít môn" in message)
 
+    def test_sheets_main_refuses_local_sync_without_explicit_env(self):
+        with patch.dict(sheets.os.environ, {}, clear=True), patch.object(
+            sheets, "sync_to_sheets"
+        ) as sync_to_sheets:
+            self.assertFalse(sheets.main())
+
+        sync_to_sheets.assert_not_called()
+
     def test_scraper_prefers_google_sheets_existing_data_before_local_json(self):
         sheets_data = {
             "subjects": [

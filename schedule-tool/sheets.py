@@ -265,5 +265,15 @@ def sync_to_sheets(data, allow_older=False):
         return False
 
 
+def main():
+    if os.getenv("ALLOW_LOCAL_SHEETS_SYNC") == "1":
+        return sync_to_sheets(load_local_data())
+
+    print(
+        "Từ chối sync data.json local. Đặt ALLOW_LOCAL_SHEETS_SYNC=1 nếu thật sự muốn ghi local fallback lên Google Sheets."
+    )
+    return False
+
+
 if __name__ == "__main__":
-    sync_to_sheets(load_local_data())
+    main()
