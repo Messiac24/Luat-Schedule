@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timedelta, timezone
 
 import gspread
 from dotenv import load_dotenv
@@ -11,6 +12,7 @@ GOOGLE_SHEETS_ID = os.getenv("GOOGLE_SHEETS_ID")
 GOOGLE_SERVICE_ACCOUNT_JSON = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
 DATA_FILE = "data.json"
 DEFAULT_SEMESTER = "Học kỳ I"
+VIETNAM_TZ = timezone(timedelta(hours=7))
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -128,23 +130,121 @@ def load_from_sheets():
     return {"subjects": subjects, "last_updated": "Google Sheets"}
 
 
-def sync_to_sheets(data=None):
+def parse_updated_at(value):
+    try:
+        parsed = datetime.fromisoformat(value)
+        if parsed.tzinfo:
+            return parsed.astimezone(VIETNAM_TZ).replace(tzinfo=None)
+        return parsed
+    except Exception:
+        return datetime.min
+
+
+def latest_subject_timestamp(subjects):
+    latest = datetime.min
+    for subject in subjects:
+        for field_name in ("last_scraped", "updated_at"):
+            updated_at = parse_updated_at(subject.get(field_name, ""))
+            if updated_at > latest:
+                latest = updated_at
+    return latest
+
+
+def subject_key(subject):
+    return str(subject.get("id") or subject.get("ma_hp") or "").strip()
+
+
+def subjects_from_rows(rows):
+    return [
+        row_to_subject(i, row)
+        for i, row in enumerate(rows[1:], 1)
+        if len(row) > 1 and row[1]
+    ]
+
+
+def validate_sync_payload(subjects, current_subjects, allow_older=False):
+    if not subjects:
+        return False, "Không có môn học nào để sync."
+
+    if not current_subjects:
+        return True, ""
+
+    if len(subjects) < len(current_subjects):
+        return (
+            False,
+            "Từ chối sync vì dữ liệu mới có ít môn hơn Google Sheets hiện tại.",
+        )
+
+    subjects_by_key = {
+        subject_key(subject): subject for subject in subjects if subject_key(subject)
+    }
+    current_by_key = {
+        subject_key(subject): subject
+        for subject in current_subjects
+        if subject_key(subject)
+    }
+    missing_keys = sorted(set(current_by_key) - set(subjects_by_key))
+    if missing_keys:
+        return (
+            False,
+            "Từ chối sync vì dữ liệu mới thiếu môn đang có trên Google Sheets.",
+        )
+
+    if not allow_older:
+        for key, current_subject in current_by_key.items():
+            current_timestamp = latest_subject_timestamp([current_subject])
+            candidate_timestamp = latest_subject_timestamp([subjects_by_key[key]])
+            if (
+                current_timestamp != datetime.min
+                and candidate_timestamp != datetime.min
+                and candidate_timestamp < current_timestamp
+            ):
+                return (
+                    False,
+                    "Từ chối sync vì một môn trong dữ liệu mới cũ hơn Google Sheets hiện tại.",
+                )
+
+    current_latest = latest_subject_timestamp(current_subjects)
+    candidate_latest = latest_subject_timestamp(subjects)
+    if (
+        not allow_older
+        and current_latest != datetime.min
+        and candidate_latest != datetime.min
+        and candidate_latest < current_latest
+    ):
+        return (
+            False,
+            "Từ chối sync vì dữ liệu chuẩn bị ghi cũ hơn Google Sheets hiện tại.",
+        )
+
+    return True, ""
+
+
+def sync_to_sheets(data, allow_older=False):
     if not GOOGLE_SHEETS_ID:
         print("Vui lòng cấu hình GOOGLE_SHEETS_ID trong .env")
         return False
 
     try:
-        data = data or load_local_data()
-        subjects = data.get("subjects", [])
-        if not subjects:
-            print("Không có môn học nào để sync.")
+        if data is None:
+            print("Từ chối sync khi thiếu dữ liệu nguồn rõ ràng.")
             return False
+
+        subjects = data.get("subjects", [])
 
         if not sheets_enabled():
             print("Google Sheets credentials chưa được cấu hình.")
             return False
 
         sheet = get_sheet()
+        current_subjects = subjects_from_rows(sheet.get_all_values())
+        is_valid, validation_message = validate_sync_payload(
+            subjects, current_subjects, allow_older=allow_older
+        )
+        if not is_valid:
+            print(validation_message)
+            return False
+
         rows = [SHEET_HEADERS]
         rows.extend(subject_to_row(subject) for subject in subjects)
 
@@ -166,4 +266,4 @@ def sync_to_sheets(data=None):
 
 
 if __name__ == "__main__":
-    sync_to_sheets()
+    sync_to_sheets(load_local_data())
