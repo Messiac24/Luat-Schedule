@@ -1082,6 +1082,7 @@ tr.subject-row.low-class-count .badge-class {
 
     .app-header {
         padding: 12px 0;
+        z-index: 70;
     }
 
     .header-content {
