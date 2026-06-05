@@ -31,8 +31,8 @@
                 <button id="btn-export-excel" class="btn btn-primary" type="button">
                     Export Excel
                 </button>
-                <a class="btn btn-secondary" href="https://thu-chi-luat.vercel.app/" target="_blank" rel="noopener noreferrer">Thu chi Luật</a>
                 {% if is_admin %}
+                <a class="btn btn-secondary" href="https://thu-chi-luat.vercel.app/" target="_blank" rel="noopener noreferrer">Thu chi Luật</a>
                 {% if can_edit %}
                 <a class="btn btn-secondary" href="{{ url_for('admin', mode='view') }}">Xem như người dùng</a>
                 {% else %}

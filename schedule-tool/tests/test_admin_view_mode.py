@@ -59,6 +59,7 @@ class AdminViewModeTests(unittest.TestCase):
         self.assertIn("btn-save-row", html)
         self.assertIn("btn-scrape", html)
         self.assertIn("Xem như người dùng", html)
+        self.assertIn("Thu chi Luật", html)
 
     def test_admin_edit_mode_hides_scrape_button_on_vercel(self):
         self.login()
@@ -94,6 +95,7 @@ class AdminViewModeTests(unittest.TestCase):
         self.assertNotIn("status-select", html)
         self.assertNotIn("btn-save-row", html)
         self.assertNotIn("Xem như người dùng", html)
+        self.assertNotIn("Thu chi Luật", html)
 
     def test_update_rejects_invalid_status(self):
         self.login()
