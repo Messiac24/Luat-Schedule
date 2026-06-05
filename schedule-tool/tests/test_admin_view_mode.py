@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import app
 
@@ -126,6 +126,26 @@ class AdminViewModeTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 500)
         self.assertFalse(response.get_json()["success"])
+
+    def test_update_writes_only_the_changed_sheet_row(self):
+        self.login()
+        sheet = Mock()
+        current_data = {"subjects": [dict(SAMPLE_DATA["subjects"][0])]}
+
+        with patch.object(app, "load_data", return_value=current_data), patch.object(
+            app, "sheets_enabled", return_value=True
+        ), patch.object(app, "get_sheet", return_value=sheet), patch.object(
+            app, "save_data"
+        ) as save_data:
+            response = self.client.post(
+                "/api/update",
+                json={"id": "LAW101", "phong_hoc": "A202"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        sheet.update.assert_called_once()
+        self.assertEqual(sheet.update.call_args.args[0], "A2:M2")
+        save_data.assert_not_called()
 
     def test_sync_uses_current_loaded_data_instead_of_local_fallback(self):
         self.login()

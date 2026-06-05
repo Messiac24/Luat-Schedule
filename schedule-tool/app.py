@@ -313,6 +313,22 @@ def save_data(data):
     return cache_local_data(data)
 
 
+def save_subject_row(subject_index, subject):
+    if sheets_enabled():
+        try:
+            row_number = subject_index + 2
+            get_sheet().update(
+                f"A{row_number}:M{row_number}",
+                [subject_to_row(subject)],
+            )
+            return True
+        except Exception as e:
+            print(f"Error updating Google Sheets row: {e}")
+            return False
+
+    return None
+
+
 def render_no_store_template(template_name, **context):
     response = make_response(render_template(template_name, **context))
     response.headers["Cache-Control"] = "no-store, max-age=0"
@@ -565,7 +581,8 @@ def update_subject():
     subjects = data.get("subjects", [])
 
     found = False
-    for subj in subjects:
+    subject_index = None
+    for index, subj in enumerate(subjects):
         if subj.get("id") == subj_id:
             if new_status:
                 subj["trang_thai"] = new_status
@@ -575,10 +592,12 @@ def update_subject():
                 subj["phong_hoc"] = new_room
             subj["updated_at"] = now_vietnam_iso()
             found = True
+            subject_index = index
             break
 
     if found:
-        if not save_data(data):
+        row_saved = save_subject_row(subject_index, subj)
+        if row_saved is False or (row_saved is None and not save_data(data)):
             return jsonify({"success": False, "message": "Unable to save data"}), 500
         return jsonify({"success": True, "subject": subj})
     else:
@@ -596,18 +615,21 @@ def reset_subject():
     data = load_data()
     subjects = data.get("subjects", [])
     found = False
+    subject_index = None
 
-    for subj in subjects:
+    for index, subj in enumerate(subjects):
         if subj.get("id") == subj_id:
             subj["thoi_gian"] = subj.get("thoi_gian_goc", subj.get("thoi_gian", ""))
             subj["trang_thai"] = "Chưa học"
             subj["updated_at"] = now_vietnam_iso()
             found = True
+            subject_index = index
             reset_subject = subj
             break
 
     if found:
-        if not save_data(data):
+        row_saved = save_subject_row(subject_index, reset_subject)
+        if row_saved is False or (row_saved is None and not save_data(data)):
             return jsonify({"success": False, "message": "Unable to save data"}), 500
         return jsonify(
             {
