@@ -16,6 +16,8 @@ class PwaTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('rel="manifest"', html)
         self.assertIn("/manifest.webmanifest", html)
+        self.assertIn("/static/icons/dlu-32.png", html)
+        self.assertIn("/static/icons/dlu-180.png", html)
         self.assertIn("serviceWorker.register", html)
         self.assertIn("/service-worker.js", html)
         self.assertEqual(response.headers["Cache-Control"], "no-store, max-age=0")
@@ -28,6 +30,8 @@ class PwaTests(unittest.TestCase):
         self.assertEqual(manifest["display"], "standalone")
         self.assertEqual(manifest["start_url"], "/")
         self.assertTrue(manifest["icons"])
+        self.assertEqual(manifest["icons"][0]["src"], "/static/icons/dlu-192.png")
+        self.assertEqual(manifest["icons"][0]["type"], "image/png")
 
     def test_service_worker_served_at_root_scope(self):
         response = self.client.get("/service-worker.js")
