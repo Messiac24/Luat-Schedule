@@ -72,6 +72,30 @@ class AdminViewModeTests(unittest.TestCase):
         self.assertNotIn("btn-scrape", html)
         self.assertIn("status-select", html)
 
+    def test_admin_header_actions_use_production_order(self):
+        self.login()
+
+        with patch.object(app, "is_vercel_runtime", return_value=True), patch.object(
+            app, "sheets_enabled", return_value=True
+        ):
+            response = self.client.get("/admin")
+        html = response.get_data(as_text=True)
+
+        labels = [
+            "Chuyển mã lớp",
+            "Xem như người dùng",
+            "Thu chi Luật",
+            "Export Excel",
+            "Đồng bộ lại Google Sheets",
+            "Đăng xuất",
+        ]
+        positions = [html.index(label) for label in labels]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("btn-finance", html)
+        self.assertIn("btn-logout", html)
+
     def test_admin_view_mode_renders_like_public_but_keeps_admin_session_actions(self):
         self.login()
 

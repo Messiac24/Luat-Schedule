@@ -28,16 +28,18 @@
                 <button id="btn-toggle-class-map" class="btn btn-secondary">
                     Chuyển mã lớp
                 </button>
-                <button id="btn-export-excel" class="btn btn-primary" type="button">
-                    Export Excel
-                </button>
                 {% if is_admin %}
-                <a class="btn btn-secondary" href="https://thu-chi-luat.vercel.app/" target="_blank" rel="noopener noreferrer">Thu chi Luật</a>
                 {% if can_edit %}
                 <a class="btn btn-secondary" href="{{ url_for('admin', mode='view') }}">Xem như người dùng</a>
                 {% else %}
                 <a class="btn btn-primary" href="{{ url_for('admin', mode='edit') }}">Quay lại quản trị</a>
                 {% endif %}
+                <a class="btn btn-finance" href="https://thu-chi-luat.vercel.app/" target="_blank" rel="noopener noreferrer">Thu chi Luật</a>
+                {% endif %}
+                <button id="btn-export-excel" class="btn btn-primary" type="button">
+                    Export Excel
+                </button>
+                {% if is_admin %}
                 {% if can_edit %}
                 {% if not is_vercel %}
                 <button id="btn-scrape" class="btn btn-secondary">
@@ -53,7 +55,7 @@
                 {% endif %}
                 {% endif %}
                 <form method="post" action="{{ url_for('logout') }}">
-                    <button class="btn btn-secondary" type="submit">Đăng xuất</button>
+                    <button class="btn btn-logout" type="submit">Đăng xuất</button>
                 </form>
                 {% endif %}
             </div>
