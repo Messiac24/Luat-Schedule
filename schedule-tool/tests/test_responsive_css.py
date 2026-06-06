@@ -12,6 +12,18 @@ class ResponsiveCssTests(unittest.TestCase):
         self.assertIn(".col-classes .badge-class {\n        flex: 0 0 auto;", css)
         self.assertIn("align-self: flex-start;", css)
 
+    def test_makeup_status_uses_row_overlay_without_padding_changes(self):
+        css = Path("static/css/style.css").read_text(encoding="utf-8")
+
+        self.assertIn("--color-makeup-overlay: rgba(124, 58, 237, 0.08);", css)
+        self.assertIn(".status-học-bù.subject-row {\n    background-color: var(--color-surface);", css)
+        self.assertIn(
+            "background-image: linear-gradient(var(--color-makeup-overlay), var(--color-makeup-overlay));",
+            css,
+        )
+        self.assertIn(".status-học-bù td {\n    background-color: transparent;", css)
+        self.assertNotIn(".status-học-bù td {\n    padding", css)
+
 
 if __name__ == "__main__":
     unittest.main()

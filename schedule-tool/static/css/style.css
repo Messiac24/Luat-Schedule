@@ -9,6 +9,9 @@
     --color-warning: #D97706;
     --color-warning-light: #FEF3C7;
     --color-error: #DC2626;
+    --color-makeup: #7C3AED;
+    --color-makeup-overlay: rgba(124, 58, 237, 0.08);
+    --color-makeup-overlay-hover: rgba(124, 58, 237, 0.12);
     
     --color-bg: #F9FAFB;
     --color-surface: #FFFFFF;
@@ -468,7 +471,7 @@ tr.subject-row.low-class-count .badge-class {
 
 .status-học-bù .status-select {
     background-color: rgba(124, 58, 237, 0.10);
-    color: #7C3AED;
+    color: var(--color-makeup);
     border-color: rgba(124, 58, 237, 0.45);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237C3AED' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18);
@@ -476,14 +479,22 @@ tr.subject-row.low-class-count .badge-class {
 
 .status-học-bù .status-badge {
     background-color: rgba(124, 58, 237, 0.12);
-    color: #7C3AED;
+    color: var(--color-makeup);
     border-color: rgba(124, 58, 237, 0.35);
     font-weight: 700;
 }
 
+.status-học-bù.subject-row {
+    background-color: var(--color-surface);
+    background-image: linear-gradient(var(--color-makeup-overlay), var(--color-makeup-overlay));
+}
 
 .status-học-bù td {
-    background-color: rgba(124, 58, 237, 0.08);
+    background-color: transparent;
+}
+
+.status-học-bù.subject-row:hover {
+    background-image: linear-gradient(var(--color-makeup-overlay-hover), var(--color-makeup-overlay-hover));
 }
 
 .status-học-bù td:first-child {
@@ -822,8 +833,8 @@ tr.subject-row.low-class-count .badge-class {
 
     /* Handling status colors on Cards */
     .status-học-bù.subject-row {
-        box-shadow: inset 4px 0 0 #7C3AED, var(--shadow-sm);
-        background-color: rgba(124, 58, 237, 0.06);
+        box-shadow: inset 4px 0 0 var(--color-makeup), var(--shadow-sm);
+        background-image: linear-gradient(var(--color-makeup-overlay), var(--color-makeup-overlay));
         border-color: rgba(124, 58, 237, 0.25);
     }
     .status-học-bù td {
@@ -831,7 +842,7 @@ tr.subject-row.low-class-count .badge-class {
         box-shadow: none !important;
     }
     .status-học-bù .col-name {
-        color: #7C3AED !important;
+        color: var(--color-makeup) !important;
     }
     
     .status-đã-học.subject-row {
@@ -1048,7 +1059,7 @@ tr.subject-row.low-class-count .badge-class {
 
     .status-học-bù.subject-row {
         border-color: rgba(124, 58, 237, 0.28);
-        box-shadow: inset 4px 0 0 #7C3AED, var(--shadow-sm);
+        box-shadow: inset 4px 0 0 var(--color-makeup), var(--shadow-sm);
     }
 
     .status-học-bù td {
@@ -1481,8 +1492,8 @@ tr.subject-row.low-class-count .badge-class {
 
     .status-học-bù.subject-row {
         border-color: rgba(124, 58, 237, 0.3);
-        box-shadow: inset 4px 0 0 #7C3AED, var(--shadow-sm);
-        background-color: rgba(124, 58, 237, 0.05);
+        box-shadow: inset 4px 0 0 var(--color-makeup), var(--shadow-sm);
+        background-image: linear-gradient(var(--color-makeup-overlay), var(--color-makeup-overlay));
     }
 
     .status-học-bù td {

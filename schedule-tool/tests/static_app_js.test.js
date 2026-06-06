@@ -35,6 +35,28 @@ assert.equal(sandbox.getStatusPriority('Học bù'), 1);
 assert.equal(sandbox.scheduleSortValueFromText('06/06/2026 (Thứ Bảy) - Sáng'), '2026-06-06');
 assert.equal(sandbox.scheduleSortValueFromText('Không có lịch'), '');
 
+const classNames = new Set(['subject-row', 'status-chưa-học', 'low-class-count', 'filtered-visible']);
+const statusRow = {
+  dataset: { lowClassCount: 'true' },
+  classList: {
+    add: (name) => classNames.add(name),
+    remove: (name) => classNames.delete(name),
+    forEach: (callback) => Array.from(classNames).forEach(callback),
+    contains: (name) => classNames.has(name),
+  },
+};
+
+sandbox.document.querySelector = (selector) => (
+  selector === 'tr[data-id="LAW101"]' ? statusRow : null
+);
+sandbox.updateRowStatusClass('LAW101', 'Học bù');
+
+assert.equal(classNames.has('status-chưa-học'), false);
+assert.equal(classNames.has('status-học-bù'), true);
+assert.equal(classNames.has('subject-row'), true);
+assert.equal(classNames.has('low-class-count'), true);
+assert.equal(classNames.has('filtered-visible'), true);
+
 const rows = [
   {
     dataset: { viewIndex: '5', updatedAt: '', scheduleSort: '2026-06-13' },
