@@ -12,6 +12,14 @@ class ResponsiveCssTests(unittest.TestCase):
         self.assertIn(".col-classes .badge-class {\n        flex: 0 0 auto;", css)
         self.assertIn("align-self: flex-start;", css)
 
+    def test_lh26b2dl_badge_uses_light_purple_background(self):
+        css = Path("static/css/style.css").read_text(encoding="utf-8")
+
+        self.assertIn(".badge-class.class-lh26b2dl,", css)
+        self.assertIn("background: #F3E8FF;", css)
+        self.assertIn("border-color: #D8B4FE;", css)
+        self.assertIn("color: #6B21A8;", css)
+
     def test_makeup_status_uses_row_overlay_without_padding_changes(self):
         css = Path("static/css/style.css").read_text(encoding="utf-8")
 

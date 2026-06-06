@@ -157,7 +157,7 @@
                             </td>
                             <td class="col-classes" data-label="LỚP HỌC">
                                 {% for lop in subj.lop_hoc %}
-                                    <span class="badge-class">{{ lop }}</span>
+                                    <span class="badge-class{% if lop == 'LH26B2DL' %} class-lh26b2dl{% endif %}">{{ lop }}</span>
                                 {% endfor %}
                             </td>
                             <td class="col-status" data-label="TRẠNG THÁI">

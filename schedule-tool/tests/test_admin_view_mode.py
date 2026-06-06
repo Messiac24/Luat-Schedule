@@ -60,6 +60,7 @@ class AdminViewModeTests(unittest.TestCase):
         self.assertIn("btn-scrape", html)
         self.assertIn("Xem như người dùng", html)
         self.assertIn("Thu chi Luật", html)
+        self.assertIn("badge-class class-lh26b2dl", html)
 
     def test_admin_edit_mode_hides_scrape_button_on_vercel(self):
         self.login()

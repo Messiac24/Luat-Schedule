@@ -380,6 +380,13 @@ tr.subject-row.low-class-count .badge-class {
     margin-bottom: 6px;
 }
 
+.badge-class.class-lh26b2dl,
+tr.subject-row.low-class-count .badge-class.class-lh26b2dl {
+    background: #F3E8FF;
+    border-color: #D8B4FE;
+    color: #6B21A8;
+}
+
 /* Status Select (Pill Design) */
 .status-select {
     appearance: none;
